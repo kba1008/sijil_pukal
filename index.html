@@ -3,513 +3,1239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Laporan AI Universal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Pencetak Sijil Pukal Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <!-- Cikgu AI: Menambah font 'Inter' untuk gaya korporat moden -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .scroll-hide::-webkit-scrollbar { display: none; }
-        /* Font Arial Saiz 12 (approx 16px/12pt) untuk paparan yang bersih */
-        textarea { font-family: 'Arial', sans-serif; font-size: 12pt; line-height: 1.5; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Corporate Header Design */
+        header {
+            text-align: center;
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1em;
+        }
+
+        /* Card Styling - Clean & Minimal */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            color: var(--text-main);
+            margin-bottom: 24px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+            font-size: 1.25em;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .upload-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 40px 20px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-box:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .upload-box i {
+            font-size: 2.5em;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .upload-box p {
+            color: var(--text-muted);
+            font-weight: 500;
+            margin: 5px 0;
+        }
+
+        .upload-box input[type="file"] {
+            display: none;
+        }
+
+        #templatePreviewContainer {
+            margin-top: 20px;
+            text-align: center;
+            overflow-x: auto;
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        #templatePreview {
+            display: inline-block;
+            position: relative;
+            max-width: 100%;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            background: white;
+            line-height: 0;
+        }
+
+        #certificateTemplate {
+            max-width: 100%;
+            max-height: 600px;
+            display: none;
+        }
+
+        #headersContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            min-height: 60px;
+        }
+
+        .draggable-header {
+            padding: 8px 16px;
+            background: white;
+            color: var(--text-main);
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: move;
+            font-weight: 600;
+            font-size: 0.9em;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+
+        .draggable-header:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .drop-zone {
+            position: absolute;
+            min-width: auto;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px dashed var(--primary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transform: translate(-50%, 0);
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            white-space: nowrap;
+            line-height: 1.2;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        /* Cikgu AI: Style Khas untuk Selected Zone dengan Garisan Grid */
+        .drop-zone:hover, .drop-zone.selected-zone {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #ef4444;
+            z-index: 20;
+            /* Grid Lines Visual (Crosshair) */
+            background-image: 
+                linear-gradient(to right, transparent 49%, rgba(255,0,0,0.4) 50%, transparent 51%),
+                linear-gradient(to bottom, transparent 49%, rgba(255,0,0,0.4) 50%, transparent 51%);
+            background-size: 100% 100%;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.5);
+        }
+
+        /* Helper label for guidelines */
+        .drop-zone.selected-zone::after {
+            content: '✛ Pusat';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #ef4444;
+            background: white;
+            padding: 1px 4px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        .drop-zone .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        #styleEditor {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .style-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .style-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .style-group label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .style-input {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: white;
+        }
+
+        .style-input:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        /* Button Refinement */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        .btn-success:hover { background: #059669; }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .btn-warning:hover { background: #d97706; }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover { background: #dc2626; }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid #cbd5e1;
+        }
+        .btn-secondary:hover { background: #f1f5f9; }
+
+        /* Preview Section */
+        #previewSection {
+            margin-top: 30px;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .certificate-preview {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            page-break-after: always;
+            line-height: 0;
+        }
+        
+        .certificate-preview img.bg-img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .preview-field {
+            position: absolute;
+            line-height: normal;
+            white-space: nowrap;
+            transform: translate(-50%, 0);
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95em;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .card, header, .upload-section, .btn-group, #styleEditor {
+                display: none;
+            }
+            
+            .preview-container {
+                display: block;
+            }
+            
+            .certificate-preview {
+                width: 100% !important;
+                max-width: none !important;
+                height: auto !important;
+                page-break-after: always;
+                border: none;
+                box-shadow: none;
+            }
+            
+            .preview-field {
+                background: transparent !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                flex-direction: column;
+            }
+            .certificate-preview {
+                width: 100%;
+            }
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
-<body class="p-3 md:p-8" onload="fetchHistory()">
+<body>
+    <div class="container">
+        <header>
+            <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
+            <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.0</p>
+        </header>
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-            <div class="bg-indigo-900 p-6 text-white flex justify-between items-center">
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight uppercase">Penjana Laporan AI Universal</h1>
-                    <p class="text-indigo-200 text-xs mt-1">Apa Sahaja Jenis Laporan | Auto-Format | Profesional</p>
-                </div>
-                <div class="text-right hidden md:block">
-                    <div class="text-xs bg-indigo-800 py-1 px-3 rounded-full">Versi Universal 4.0</div>
+        <div class="card">
+            <h2 class="card-title"><span>📁</span> 1. Muat Naik Template Sijil</h2>
+            <div class="upload-section">
+                <div class="upload-box" id="templateDropZone">
+                    <i style="font-style: normal; font-size: 2em;">🖼️</i>
+                    <p>Klik atau Seret Template Sijil Di Sini</p>
+                    <p style="font-size: 0.85em; opacity: 0.7;">(Sokongan: JPG, PNG, PDF)</p>
+                    <input type="file" id="templateUpload" accept="image/*,.pdf">
                 </div>
             </div>
-
-            <div class="p-6 md:p-8 space-y-6">
-                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                    <label class="block text-xs font-bold text-indigo-800 uppercase mb-2">Langkah 1: Nyatakan Jenis Laporan</label>
-                    <input type="text" id="reportType" class="w-full p-3 border border-indigo-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-gray-700" placeholder="Cth: Laporan Nilam / Minit Curai / Aktiviti Panitia" oninput="this.value = this.value.toUpperCase()">
+            <div id="templatePreviewContainer" class="hidden">
+                <h3 style="margin-bottom: 15px; color: var(--text-main);">📸 Paparan Template:</h3>
+                <div id="templatePreview">
+                    <img id="certificateTemplate" alt="Template Sijil">
                 </div>
+            </div>
+        </div>
 
-                <div>
-                    <p class="text-xs text-gray-400 italic mb-3">* Isi maklumat asas yang standard. AI akan sesuaikan format mengikut jenis laporan anda.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="label-text">Tajuk / Perkara / Unit</label>
-                            <input type="text" id="subject" class="input-field" placeholder="Cth: Mesyuarat AJK PIBG Bil 1/2024" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        <div>
-                            <label class="label-text">Tarikh & Masa</label>
-                            <div class="flex gap-2">
-                                <input type="date" id="reportDate" class="input-field w-2/3">
-                                <input type="time" id="reportTime" class="input-field w-1/3">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="label-text">Pegawai Pelapor / Guru Utama</label>
-                            <input type="text" id="teacher" class="input-field" placeholder="Nama Anda" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        <div>
-                            <label class="label-text">Guru Pembantu / SU (Jika Ada)</label>
-                            <input type="text" id="assistant" class="input-field" placeholder="Optional" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-
-                        <div>
-                            <label class="label-text">Bilangan Terlibat / Kehadiran</label>
-                            <input type="text" id="studentCount" class="input-field" placeholder="Cth: 30 Orang" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        <div>
-                            <label class="label-text">Lokasi / Tempat</label>
-                            <input type="text" id="location" class="input-field" placeholder="Cth: Bilik Gerakan / Dewan" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        
-                        <div class="col-span-full">
-                            <label class="label-text">Sasaran (Siapa yang terlibat)</label>
-                            <input type="text" id="targetGroup" class="input-field" placeholder="Cth: Semua Guru & AKP" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                    </div>
+        <div class="card">
+            <h2 class="card-title"><span>📊</span> 2. Muat Naik Pangkalan Data (Excel)</h2>
+            <div class="upload-section">
+                <div class="upload-box" id="excelDropZone">
+                    <i style="font-style: normal; font-size: 2em;">📋</i>
+                    <p>Klik atau Seret Fail Excel Di Sini</p>
+                    <p style="font-size: 0.85em; opacity: 0.7;">(Sokongan: XLSX, XLS, CSV)</p>
+                    <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv">
                 </div>
-
-                <div class="space-y-2">
-                    <label class="label-text">Muat Naik Gambar (1 - 10 Keping)</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <!-- Butang Kamera -->
-                        <label class="flex flex-col items-center justify-center h-24 border-2 border-dashed border-indigo-300 rounded-xl hover:bg-indigo-50 cursor-pointer bg-white transition-colors group">
-                            <span class="text-2xl mb-1 group-hover:scale-110 transition-transform">??</span>
-                            <span class="text-indigo-700 text-[10px] font-bold uppercase">Kamera</span>
-                            <input type="file" accept="image/*" capture="environment" onchange="handleImages(this)" class="hidden">
-                        </label>
-                        <!-- Butang Galeri -->
-                        <label class="flex flex-col items-center justify-center h-24 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 cursor-pointer bg-white transition-colors group">
-                            <span class="text-2xl mb-1 group-hover:scale-110 transition-transform">??</span>
-                            <span class="text-gray-500 text-[10px] font-bold uppercase">Galeri</span>
-                            <input type="file" accept="image/*" multiple onchange="handleImages(this)" class="hidden">
-                        </label>
-                    </div>
-                    <div id="previewArea" class="flex gap-3 overflow-x-auto py-2 scroll-hide"></div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="label-text text-indigo-700">Poin Ringkas / Agenda / Nota (AI Akan Kembangkan)</label>
-                    <textarea id="notes" rows="4" class="w-full p-4 border rounded-xl bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-400 text-sm" placeholder="Masukkan poin penting di sini. Contoh:
-- Ucapan aluan pengerusi
-- Bincang isu kehadiran murid
-- Cadangan program motivasi
-- Penutup dan jamuan ringan"></textarea>
-                </div>
-
-                <button onclick="generateAndSave()" id="btnAction" class="w-full bg-indigo-700 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-indigo-800 active:scale-95 transition-all text-md tracking-wide">
-                    ? JANA LAPORAN PENUH
-                </button>
+            </div>
+            
+            <div id="excelStatus" class="hidden"></div>
+            
+            <div id="mappingSection" class="hidden">
+                <h3 style="font-size: 1.1em; color: var(--primary-dark); margin-top: 20px;">🎯 3. Pemetaan Medan Data</h3>
+                <p style="margin: 10px 0; color: var(--text-muted); font-size: 0.95em;">
+                    Sila <strong>heret (drag)</strong> label di bawah ke atas template sijil. <br> 
+                    <span style="color: var(--primary); font-weight: 600;">ℹ️ Tip Pro:</span> Klik pada medan untuk aktifkan <strong>garisan grid</strong> dan gunakan <strong>Arrow Keys</strong> di keyboard untuk ketepatan pixel.
+                </p>
                 
-                <div id="loading" class="hidden flex flex-col items-center py-4">
-                    <div class="loader"></div>
-                    <p id="status" class="text-indigo-700 text-sm mt-3 font-medium animate-pulse">AI sedang menulis laporan anda...</p>
+                <div id="headersContainer"></div>
+
+                <!-- Style Editor -->
+                <div id="styleEditor" class="hidden">
+                    <h4 style="margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px;">✨ Tetapan Font: <span id="editingFieldName" style="font-weight: 800; color: var(--text-main);">-</span></h4>
+                    <div class="style-controls">
+                        <div class="style-group">
+                            <label>Saiz (px)</label>
+                            <input type="number" id="editFontSize" class="style-input" value="20" min="8" max="200">
+                        </div>
+                        <div class="style-group">
+                            <label>Warna</label>
+                            <input type="color" id="editColor" class="style-input" value="#000000" style="height: 38px; width: 60px; padding: 2px;">
+                        </div>
+                        <div class="style-group">
+                            <label>Tipografi</label>
+                            <select id="editFontFamily" class="style-input">
+                                <option value="'Segoe UI', sans-serif">Segoe UI (Standard)</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="'Arial', sans-serif">Arial</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                                <option value="'Georgia', serif">Georgia</option>
+                                <option value="'Verdana', sans-serif">Verdana</option>
+                                <option value="cursive">Tulisan Tangan (Cursive)</option>
+                                <option value="'Helvetica', sans-serif">Helvetica</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                <option value="'Arial Black', sans-serif">Arial Black</option>
+                                <option value="'Impact', sans-serif">Impact</option>
+                                <option value="'Tahoma', sans-serif">Tahoma</option>
+                                <option value="'Geneva', sans-serif">Geneva</option>
+                                <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                                <option value="'Lucida Grande', sans-serif">Lucida Grande</option>
+                                <option value="'Optima', sans-serif">Optima</option>
+                                <option value="'Avant Garde', sans-serif">Avant Garde</option>
+                                <option value="'Roboto', sans-serif">Roboto</option>
+                                <option value="'Open Sans', sans-serif">Open Sans</option>
+                                <option value="'Lato', sans-serif">Lato</option>
+                                <option value="'Montserrat', sans-serif">Montserrat</option>
+                                <option value="'Oswald', sans-serif">Oswald</option>
+                                <option value="'Raleway', sans-serif">Raleway</option>
+                                <option value="'Merriweather', serif">Merriweather</option>
+                                <option value="'Noto Sans', sans-serif">Noto Sans</option>
+                                <option value="'Poppins', sans-serif">Poppins</option>
+                                <option value="'Ubuntu', sans-serif">Ubuntu</option>
+                                <option value="'Playfair Display', serif">Playfair Display</option>
+                                <option value="'Roboto Condensed', sans-serif">Roboto Condensed</option>
+                                <option value="'Roboto Slab', serif">Roboto Slab</option>
+                                <option value="'Lora', serif">Lora</option>
+                                <option value="'PT Sans', sans-serif">PT Sans</option>
+                                <option value="'PT Serif', serif">PT Serif</option>
+                                <option value="'Droid Sans', sans-serif">Droid Sans</option>
+                                <option value="'Droid Serif', serif">Droid Serif</option>
+                                <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                                <option value="'Nunito', sans-serif">Nunito</option>
+                                <option value="'Titillium Web', sans-serif">Titillium Web</option>
+                                <option value="'Muli', sans-serif">Muli</option>
+                                <option value="'Arvo', serif">Arvo</option>
+                                <option value="'Fjalla One', sans-serif">Fjalla One</option>
+                                <option value="'Josefin Sans', sans-serif">Josefin Sans</option>
+                                <option value="'Abril Fatface', cursive">Abril Fatface</option>
+                                <option value="'Ubuntu Condensed', sans-serif">Ubuntu Condensed</option>
+                                <option value="'Archivo Narrow', sans-serif">Archivo Narrow</option>
+                                <option value="'Yanone Kaffeesatz', sans-serif">Yanone Kaffeesatz</option>
+                                <option value="'Exo', sans-serif">Exo</option>
+                                <option value="'Bitter', serif">Bitter</option>
+                                <option value="'Pacifico', cursive">Pacifico</option>
+                                <option value="'Dancing Script', cursive">Dancing Script</option>
+                                <option value="'Shadows Into Light', cursive">Shadows Into Light</option>
+                                <option value="'Lobster', cursive">Lobster</option>
+                                <option value="'Indie Flower', cursive">Indie Flower</option>
+                                <option value="'Anton', sans-serif">Anton</option>
+                                <option value="'Oxygen', sans-serif">Oxygen</option>
+                                <option value="'Questrial', sans-serif">Questrial</option>
+                                <option value="'Signika', sans-serif">Signika</option>
+                                <option value="'Varela Round', sans-serif">Varela Round</option>
+                                <option value="'Maven Pro', sans-serif">Maven Pro</option>
+                                <option value="'Cuprum', sans-serif">Cuprum</option>
+                                <option value="'Alegreya', serif">Alegreya</option>
+                                <option value="'Francois One', sans-serif">Francois One</option>
+                                <option value="'Rokkitt', serif">Rokkitt</option>
+                                <option value="'Pathway Gothic One', sans-serif">Pathway Gothic One</option>
+                                <option value="'Cantarell', sans-serif">Cantarell</option>
+                                <option value="'Cardo', serif">Cardo</option>
+                                <option value="'Vollkorn', serif">Vollkorn</option>
+                                <option value="'Ruda', sans-serif">Ruda</option>
+                                <option value="'Old Standard TT', serif">Old Standard TT</option>
+                                <option value="'Crimson Text', serif">Crimson Text</option>
+                                <option value="'Volkhov', serif">Volkhov</option>
+                                <option value="'Play', sans-serif">Play</option>
+                                <option value="'Philosopher', sans-serif">Philosopher</option>
+                                <option value="'Didact Gothic', sans-serif">Didact Gothic</option>
+                                <option value="'Jura', sans-serif">Jura</option>
+                                <option value="'Sintony', sans-serif">Sintony</option>
+                                <option value="'Cabin', sans-serif">Cabin</option>
+                                <option value="'Quicksand', sans-serif">Quicksand</option>
+                                <option value="'Inconsolata', monospace">Inconsolata</option>
+                                <option value="'Coda', cursive">Coda</option>
+                                <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+                                <option value="'Anonymous Pro', monospace">Anonymous Pro</option>
+                                <option value="'Oxygen Mono', monospace">Oxygen Mono</option>
+                                <option value="'VT323', monospace">VT323</option>
+                                <option value="'Abel', sans-serif">Abel</option>
+                                <option value="'Satisfy', cursive">Satisfy</option>
+                                <option value="'Cookie', cursive">Cookie</option>
+                                <option value="'Great Vibes', cursive">Great Vibes</option>
+                                <option value="'Kaushan Script', cursive">Kaushan Script</option>
+                                <option value="'Sofia', cursive">Sofia</option>
+                                <option value="'Sacramento', cursive">Sacramento</option>
+                                <option value="'Amatic SC', cursive">Amatic SC</option>
+                                <option value="'Cinzel', serif">Cinzel</option>
+                                <option value="'Righteous', cursive">Righteous</option>
+                                <option value="'Fredoka One', cursive">Fredoka One</option>
+                                <option value="'Bangers', cursive">Bangers</option>
+                                <option value="'Luckiest Guy', cursive">Luckiest Guy</option>
+                                <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                                <option value="'Palatino Linotype', serif">Palatino Linotype</option>
+                                <option value="'Book Antiqua', serif">Book Antiqua</option>
+                                <option value="'Franklin Gothic Medium', sans-serif">Franklin Gothic Medium</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn-warning" id="resetMappingBtn">
+                        🔄 Reset Kedudukan
+                    </button>
+                    <button class="btn-primary" id="generateBtnMain">
+                        🎨 Jana Preview
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div id="resultArea" class="hidden bg-white rounded-2xl shadow-xl p-6 md:p-8 space-y-4 border border-gray-200">
-            <div class="flex justify-between items-center border-b pb-4">
-                <h3 class="font-bold text-gray-800 uppercase tracking-wider">Laporan Siap</h3>
-                <span class="text-[10px] bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">DISIMPAN KE GOOGLE SHEET ?</span>
+        <div class="card hidden" id="previewCard">
+            <h2 class="card-title"><span>👀</span> 4. Hasil & Cetakan</h2>
+            <div class="btn-group">
+                <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
+                <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
+                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF</button>
+                <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
             
-            <textarea id="output" rows="18" class="w-full p-5 border rounded-xl bg-slate-50 text-sm text-gray-800 outline-none shadow-inner whitespace-pre-wrap resize-none"></textarea>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                 <button onclick="copyToClipboard()" class="bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700">
-                    Salin Teks Sahaja
-                </button>
-                <button onclick="downloadPDF()" class="bg-red-700 text-white py-3 rounded-lg font-semibold hover:bg-red-800 shadow-md">
-                    ?? Muat Turun PDF
-                </button>
-                <button onclick="sharePDF()" class="bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 shadow-md">
-                    ?? Kongsi PDF
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-            <h3 class="text-sm font-bold text-gray-500 uppercase mb-4 flex items-center gap-2">
-                <span>??</span> Rekod Terdahulu
-            </h3>
-            <div id="historyList" class="space-y-3">
-                <p class="text-gray-400 text-sm animate-pulse">Menghubungkan ke pangkalan data...</p>
+            <div id="previewSection">
+                <div class="preview-container" id="previewContainer"></div>
             </div>
         </div>
     </div>
 
-    <style>
-        .label-text { display: block; font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.25rem; }
-        .input-field { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 0.75rem; background-color: #ffffff; outline: none; transition: all; font-size: 0.875rem; }
-        .input-field:focus { ring: 2px solid #6366f1; border-color: #6366f1; }
-    </style>
-
+    <!-- SheetJS Library untuk baca Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF untuk export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Cikgu AI: html2canvas untuk ketepatan font 100% -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <script>
-        const CONFIG = {
-            API_KEY: "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", 
-            // URL GAS Anda
-            GAS_URL: "https://script.google.com/macros/s/AKfycbw0V8xQ9YeP559gvjjkngTdDW7GULGby9PG4jk5_8uTJgfii2GPYW2gMl2mb1BAIJ90/exec",
-            MODEL: "llama-3.3-70b-versatile" 
-        };
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
+        let templateDataURL = null;
+        let excelData = null;
+        let headers = [];
+        let dropZones = [];
+        let certificatesGenerated = false;
+        let selectedDropZone = null;
 
-        let images = [];
-        let historyData = [];
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            registerServiceWorker();
+            setupStyleEditorListeners();
+        });
 
-        function handleImages(input) {
-            const files = Array.from(input.files);
-            if (images.length + files.length > 10) return alert("Maksimum 10 gambar.");
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    images.push({ src: e.target.result, name: file.name });
-                    renderPreviews();
-                };
-                reader.readAsDataURL(file);
-            });
-            // FIX: Reset nilai input supaya boleh pilih gambar sama/lain semula tanpa sekatan
-            input.value = '';
-        }
-
-        function removeImage(index) {
-            images.splice(index, 1);
-            renderPreviews();
-        }
-
-        function renderPreviews() {
-            const container = document.getElementById('previewArea');
-            container.innerHTML = images.map((img, i) => `
-                <div class="relative flex-shrink-0 group">
-                    <img src="${img.src}" class="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm">
-                    <!-- FIX: Butang padam sentiasa kelihatan (buang opacity-0) -->
-                    <button class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-md z-10" onclick="removeImage(${i})">�</button>
-                </div>
-            `).join('');
-        }
-
-        async function generateAndSave() {
-            // Ambil data tanpa default (kosong jika tidak diisi)
-            const type = document.getElementById('reportType').value || "LAPORAN UMUM";
-            const subject = document.getElementById('subject').value;
-            const date = document.getElementById('reportDate').value || new Date().toISOString().split('T')[0];
-            const time = document.getElementById('reportTime').value || "08:00";
-            const teacher = document.getElementById('teacher').value;
-            const assistant = document.getElementById('assistant').value;
-            const studentCount = document.getElementById('studentCount').value;
-            const location = document.getElementById('location').value;
-            const targetGroup = document.getElementById('targetGroup').value;
-            const notes = document.getElementById('notes').value;
-
-            // Hanya nota dan sekurang-kurangnya 1 gambar wajib untuk konteks AI
-            if(!notes) return alert("Sila masukkan sedikit poin ringkas aktiviti untuk AI kembangkan.");
+        function setupEventListeners() {
+            // Template upload
+            document.getElementById('templateUpload').addEventListener('change', handleTemplateUpload);
+            document.getElementById('templateDropZone').addEventListener('click', () => document.getElementById('templateUpload').click());
             
-            document.getElementById('btnAction').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-
-            let systemPrompt = "";
-            const instructions = "Gunakan Bahasa Melayu Malaysia yang tepat, ringkas, dan padat. Panjang laporan MESTI antara 250 hingga 300 patah perkataan. JANGAN gunakan garisan pemisah panjang seperti '-----' atau '===='. Gunakan jarak perenggan yang kemas sahaja.";
+            // Excel upload
+            document.getElementById('excelUpload').addEventListener('change', handleExcelUpload);
+            document.getElementById('excelDropZone').addEventListener('click', () => document.getElementById('excelUpload').click());
             
-            // --- LOGIK AI UNIVERSAL ---
-            // AI akan menentukan format berdasarkan input 'type' pengguna
-            systemPrompt = `Anda adalah pembantu penulisan dokumen rasmi sekolah yang profesional.
-            TUGASAN: Tulis satu '${type}' yang lengkap dan profesional berdasarkan maklumat di bawah.
+            // Generate certificates
+            document.getElementById('generateBtn').addEventListener('click', generateCertificates);
+            document.getElementById('generateBtnMain').addEventListener('click', generateCertificates);
+            
+            // Print
+            document.getElementById('printBtn').addEventListener('click', printCertificates);
+            
+            // Download PDF
+            document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
+            
+            // Clear all
+            document.getElementById('clearAllBtn').addEventListener('click', clearAll);
+            
+            // Reset mapping
+            document.getElementById('resetMappingBtn').addEventListener('click', resetMapping);
+            
+            // Drag and drop for template
+            setupDragDrop('templateDropZone', handleTemplateUpload);
+            setupDragDrop('excelDropZone', handleExcelUpload);
+            
+            // Cikgu AI: Sokongan Keyboard untuk pergerakan field
+            document.addEventListener('keydown', handleKeyboardMove);
+        }
 
-            ARAHAN KHAS:
-            1. ${instructions}
-            2. Sesuaikan format laporan mengikut jenis '${type}'. (Contoh: Jika 'Minit Curai', guna format minit. Jika 'Laporan Program', guna format laporan program).
-            3. Pastikan ayat yang dijana adalah gramatis dan matang.
+        function setupStyleEditorListeners() {
+            const fontSizeInput = document.getElementById('editFontSize');
+            const colorInput = document.getElementById('editColor');
+            const fontFamilyInput = document.getElementById('editFontFamily');
 
-            MAKLUMAT ASAS:
-            - Jenis Dokumen: ${type}
-            - Tajuk/Perkara: ${subject}
-            - Tarikh: ${date}
-            - Masa: ${time}
-            - Tempat: ${location}
-            - Sasaran/Terlibat: ${targetGroup}
-            - Kehadiran: ${studentCount}
-            - Guru/Pelapor: ${teacher}
-            - Guru Pembantu: ${assistant}
-
-            NOTA / POIN UTAMA (Sila kembangkan): 
-            ${notes}
-
-            Sila hasilkan output laporan sepenuhnya sekarang.`;
-
-            try {
-                const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Authorization": `Bearer ${CONFIG.API_KEY}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        model: CONFIG.MODEL, 
-                        messages: [{ role: "user", content: systemPrompt }],
-                        temperature: 0.65 
-                    })
-                });
-                
-                // FIX: Semak jika respons gagal (selain 200 OK)
-                if (!resp.ok) {
-                    const errData = await resp.json();
-                    throw new Error(errData.error?.message || "Ralat API: " + resp.status);
+            const updateStyle = () => {
+                if (selectedDropZone) {
+                    selectedDropZone.style.fontSize = fontSizeInput.value + 'px';
+                    selectedDropZone.style.color = colorInput.value;
+                    selectedDropZone.style.fontFamily = fontFamilyInput.value;
+                    
+                    // Simpan data dalam dataset untuk rujukan nanti
+                    selectedDropZone.dataset.fontSize = fontSizeInput.value;
+                    selectedDropZone.dataset.color = colorInput.value;
+                    selectedDropZone.dataset.fontFamily = fontFamilyInput.value;
                 }
+            };
 
-                const data = await resp.json();
-                if (!data.choices || !data.choices[0]) throw new Error("Tiada respons dari AI.");
+            fontSizeInput.addEventListener('input', updateStyle);
+            colorInput.addEventListener('input', updateStyle);
+            fontFamilyInput.addEventListener('change', updateStyle);
+        }
+        
+        // Cikgu AI: Fungsi Pergerakan Keyboard (Mouse & Arrow Keys)
+        function handleKeyboardMove(e) {
+            if (!selectedDropZone) return;
+            
+            // Jangan ganggu jika user sedang menaip input nilai
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
-                const successReport = data.choices[0].message.content;
+            // Hanya respon pada Arrow Keys
+            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
 
-                document.getElementById('output').value = successReport;
-                document.getElementById('resultArea').classList.remove('hidden');
-                document.getElementById('status').innerText = "Sedang simpan ke Google Sheet...";
-                
-                // Hantar ke Google Sheet
-                await autoSaveToGS(successReport, subject, teacher, type);
-                fetchHistory();
+            e.preventDefault(); // Elak scroll page
 
-            } catch (e) {
-                console.error(e);
-                alert("Ralat: " + e.message + "\n(Sila semak sambungan internet atau API KEY)");
+            let x = parseInt(selectedDropZone.style.left || 0);
+            let y = parseInt(selectedDropZone.style.top || 0);
+            
+            // Shift = Gerak Laju (10px), Biasa = Gerak Tepat (1px)
+            const step = e.shiftKey ? 10 : 1;
+
+            switch(e.key) {
+                case 'ArrowLeft': x -= step; break;
+                case 'ArrowRight': x += step; break;
+                case 'ArrowUp': y -= step; break;
+                case 'ArrowDown': y += step; break;
             }
 
-            document.getElementById('btnAction').classList.remove('hidden');
-            document.getElementById('loading').classList.add('hidden');
+            selectedDropZone.style.left = x + 'px';
+            selectedDropZone.style.top = y + 'px';
         }
 
-        async function autoSaveToGS(reportText, subject, teacher, type) {
-            const payload = {
-                action: "MASUK",
-                passcode: "101010",
-                nama: teacher,
-                type: type,
-                tujuan: subject,
-                report: reportText,
-                images: images.map(img => ({ data: img.src.split(',')[1], name: img.name }))
+        // ============================================
+        // TEMPLATE HANDLING
+        // ============================================
+        function handleTemplateUpload(event) {
+            const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                templateDataURL = e.target.result;
+                const img = document.getElementById('certificateTemplate');
+                img.src = templateDataURL;
+                img.style.display = 'block';
+                
+                document.getElementById('templatePreviewContainer').classList.remove('hidden');
+                
+                showStatus('Template berjaya dimuat naik!', 'success');
+                
+                // Reset drop zones if template changes
+                resetMapping();
             };
-            try {
-                await fetch(CONFIG.GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-            } catch (e) { console.error("Auto-save error"); }
+            reader.readAsDataURL(file);
         }
 
-        async function fetchHistory() {
-            try {
-                const resp = await fetch(CONFIG.GAS_URL, { method: "POST", body: JSON.stringify({ action: "HISTORY", passcode: "101010" }) });
-                const data = await resp.json();
-                historyData = data.reverse();
+        // ============================================
+        // EXCEL HANDLING
+        // ============================================
+        function handleExcelUpload(event) {
+            const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
+            if (!file) return;
 
-                document.getElementById('historyList').innerHTML = historyData.map((rec, idx) => `
-                    <div class="p-4 border-l-4 border-indigo-600 bg-white shadow-sm rounded-r-lg hover:bg-gray-50 transition-colors">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">${rec.date}</span>
-                            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">${rec.type.replace('LAPORAN ', '')}</span>
-                        </div>
-                        <div class="font-bold text-gray-800 text-sm truncate">${rec.tujuan}</div>
-                        <div class="text-xs text-gray-500 mt-1">Oleh: ${rec.nama}</div>
-                        
-                        <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
-                            ${rec.imgCols.filter(link => link !== "").map((link, idx) => `
-                                <a href="${link}" target="_blank" class="text-[10px] flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded hover:bg-indigo-50 text-indigo-600 transition-colors">
-                                    ?? Foto ${idx+1}
-                                </a>
-                            `).join('')}
-                            <button onclick="restore(${idx})" class="text-[10px] ml-auto bg-gray-800 text-white px-3 py-1 rounded hover:bg-gray-900 font-medium">
-                                LIHAT
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) { document.getElementById('historyList').innerHTML = "Tiada rekod dijumpai."; }
-        }
-
-        function restore(idx) {
-            const rec = historyData[idx];
-            
-            // 1. Pulihkan Input (untuk tujuan edit PDF/Generate semula)
-            document.getElementById('subject').value = rec.tujuan || "";
-            document.getElementById('teacher').value = rec.nama || "";
-            if(rec.type) document.getElementById('reportType').value = rec.type;
-            
-            // 2. Pulihkan Teks Laporan
-            document.getElementById('output').value = rec.report;
-            
-            // 3. Pulihkan Gambar (Visual)
-            // FIX: Pastikan URL Google Drive ditukar kepada format yang boleh dipapar dalam tag img
-            images = (rec.imgCols || []).filter(link => link).map(link => {
-                let url = link;
-                // Jika URL adalah Google Drive View Link, tukar ke Export View ID untuk paparan
-                const driveMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                if (driveMatch && url.includes('drive.google.com')) {
-                    url = `https://drive.google.com/uc?export=view&id=${driveMatch[1]}`;
-                }
-                return { src: url, name: "History Image" };
-            });
-            renderPreviews();
-            
-            // 4. Paparan
-            document.getElementById('resultArea').classList.remove('hidden');
-            // FIX: Scroll ke atas untuk memastikan gambar kelihatan
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            alert("Rekod dipulihkan. Anda boleh semak gambar di atas dan laporan di bawah.");
-        }
-
-        function copyToClipboard() {
-            const copyText = document.getElementById("output");
-            copyText.select();
-            copyText.setSelectionRange(0, 99999); 
-            navigator.clipboard.writeText(copyText.value);
-            alert("Teks laporan berjaya disalin!");
-        }
-
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const content = document.getElementById('output').value;
-
-            // MODIFIKASI: Tukar Font ke Helvetica (Arial equivalent) dan saiz 12
-            doc.setFont("helvetica", "normal"); 
-            doc.setFontSize(12);
-            
-            // MODIFIKASI: Buang header 'DOKUMEN DIJANA OLEH SISTEM AI'
-            // Biarkan kosong atau tajuk program
-            const title = document.getElementById('subject').value || "LAPORAN AKTIVITI";
-            doc.setFont("helvetica", "bold");
-            doc.text(title.toUpperCase(), 105, 15, null, null, "center");
-            
-            doc.setFont("helvetica", "normal");
-            const lines = doc.splitTextToSize(content, 170);
-            let y = 25; // Adjusted Y start
-            
-            // Tulis baris demi baris, tambah page jika perlu
-            lines.forEach(line => {
-                if (y > 280) { doc.addPage(); y = 20; }
-                doc.text(line, 20, y);
-                y += 6; // Sedikit jarak lebih luas (Line height)
-            });
-
-            // Muka Surat Gambar: Auto susun dalam satu A4 (1-10 gambar)
-            if(images.length > 0) {
-                doc.addPage();
-                doc.setFont("helvetica", "bold");
-                doc.text("LAMPIRAN BERGAMBAR", 105, 15, null, null, "center");
-                
-                const imgCount = images.length;
-                let cols = 1;
-                // Jika > 2 gambar, guna 2 lajur. Jika 1-2 gambar, kekal 1 lajur (menegak)
-                if (imgCount > 2) cols = 2;
-                
-                const rows = Math.ceil(imgCount / cols);
-                
-                // Kawasan kerja A4: width 190 (margin 10), height 260 (top 25, btm 12)
-                const areaW = 190;
-                const areaH = 260;
-                const gap = 5;
-                
-                const cellW = (areaW - (gap * (cols - 1))) / cols;
-                const cellH = (areaH - (gap * (rows - 1))) / rows;
-                
-                images.forEach((img, i) => {
-                    // Dapatkan dimensi untuk kekalkan aspect ratio
-                    const props = doc.getImageProperties(img.src);
-                    const ratio = props.width / props.height;
-
-                    const col = i % cols;
-                    const row = Math.floor(i / cols);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
                     
-                    const xBox = 10 + (col * (cellW + gap));
-                    const yBox = 25 + (row * (cellH + gap));
-                    
-                    let drawW = cellW;
-                    let drawH = drawW / ratio;
-                    
-                    if (drawH > cellH) {
-                        drawH = cellH;
-                        drawW = drawH * ratio;
+                    if (jsonData.length === 0) {
+                        showStatus('Fail Excel kosong!', 'error');
+                        return;
                     }
                     
-                    // Center gambar dalam kotak
-                    const offsetX = xBox + (cellW - drawW) / 2;
-                    const offsetY = yBox + (cellH - drawH) / 2;
+                    headers = jsonData[0]; // First row is headers
+                    excelData = jsonData.slice(1); // Rest is data
                     
-                    doc.addImage(img.src, 'JPEG', offsetX, offsetY, drawW, drawH);
-                });
-            }
-            
-            const fName = (document.getElementById('subject').value || "Laporan").replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-            const fTime = (document.getElementById('reportTime').value || "").replace(":", "");
-            doc.save(`${fName}_${fTime}.pdf`);
+                    document.getElementById('excelStatus').innerHTML = `
+                        <div class="status-success">
+                            ✅ Berjaya muat naik: ${excelData.length} rekod dengan ${headers.length} medan
+                        </div>
+                    `;
+                    document.getElementById('excelStatus').classList.remove('hidden');
+                    
+                    displayHeadersForMapping();
+                    document.getElementById('mappingSection').classList.remove('hidden');
+                    
+                    showStatus(`Berjaya baca ${excelData.length} rekod dari Excel!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error reading Excel:', error);
+                    showStatus('Ralat membaca fail Excel: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
-        async function sharePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const content = document.getElementById('output').value;
-            const title = document.getElementById('subject').value || "LAPORAN AKTIVITI";
+        function displayHeadersForMapping() {
+            const container = document.getElementById('headersContainer');
+            container.innerHTML = '';
             
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
-            doc.text(title.toUpperCase(), 105, 15, null, null, "center");
+            headers.forEach((header, index) => {
+                const headerElement = document.createElement('div');
+                headerElement.className = 'draggable-header';
+                headerElement.draggable = true;
+                headerElement.dataset.headerIndex = index;
+                headerElement.textContent = header;
+                
+                // Drag start
+                headerElement.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', index);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                container.appendChild(headerElement);
+            });
             
-            doc.setFont("helvetica", "normal");
-            const lines = doc.splitTextToSize(content, 170);
-            let y = 25;
+            // Setup drop zones on template preview
+            const templatePreview = document.getElementById('templatePreview');
+            templatePreview.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
             
-            lines.forEach(line => {
-                if (y > 280) { doc.addPage(); y = 20; }
-                doc.text(line, 20, y);
-                y += 6;
+            templatePreview.addEventListener('drop', function(e) {
+                e.preventDefault();
+                
+                const headerIndex = e.dataTransfer.getData('text/plain');
+                if (headerIndex === '') return;
+                
+                // Calculate position relative to template preview
+                const rect = templatePreview.getBoundingClientRect();
+                // We need to account for scroll positions if any
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                createDropZone(parseInt(headerIndex), x, y);
+            });
+        }
+
+        // ============================================
+        // DROP ZONE HANDLING (UPDATED)
+        // ============================================
+        function createDropZone(headerIndex, x, y) {
+            const templatePreview = document.getElementById('templatePreview');
+            
+            // Create drop zone
+            const dropZone = document.createElement('div');
+            dropZone.className = 'drop-zone';
+            dropZone.dataset.headerIndex = headerIndex;
+            dropZone.style.left = x + 'px';
+            dropZone.style.top = y + 'px';
+            dropZone.textContent = headers[headerIndex];
+            
+            // Default Styles
+            dropZone.style.fontSize = '20px';
+            dropZone.style.color = '#000000';
+            dropZone.style.fontFamily = "'Segoe UI', sans-serif";
+            // Store defaults in dataset
+            dropZone.dataset.fontSize = '20';
+            dropZone.dataset.color = '#000000';
+            dropZone.dataset.fontFamily = "'Segoe UI', sans-serif";
+
+            // SELECT FUNCTION (Show Editor)
+            dropZone.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectZone(dropZone);
             });
 
-            if(images.length > 0) {
-                doc.addPage();
-                doc.setFont("helvetica", "bold");
-                doc.text("LAMPIRAN BERGAMBAR", 105, 15, null, null, "center");
-                const imgCount = images.length;
-                let cols = imgCount > 2 ? 2 : 1;
-                const rows = Math.ceil(imgCount / cols);
-                const areaW = 190, areaH = 260, gap = 5;
-                const cellW = (areaW - (gap * (cols - 1))) / cols;
-                const cellH = (areaH - (gap * (rows - 1))) / rows;
+            // DRAGGABLE LOGIC
+            dropZone.addEventListener('mousedown', function(e) {
+                if (e.target.className === 'remove-btn') return;
                 
-                images.forEach((img, i) => {
-                    const props = doc.getImageProperties(img.src);
-                    const ratio = props.width / props.height;
-                    const col = i % cols;
-                    const row = Math.floor(i / cols);
-                    const xBox = 10 + (col * (cellW + gap));
-                    const yBox = 25 + (row * (cellH + gap));
-                    let drawW = cellW, drawH = drawW / ratio;
-                    if (drawH > cellH) { drawH = cellH; drawW = drawH * ratio; }
-                    const offsetX = xBox + (cellW - drawW) / 2;
-                    const offsetY = yBox + (cellH - drawH) / 2;
-                    doc.addImage(img.src, 'JPEG', offsetX, offsetY, drawW, drawH);
-                });
+                // Select automatically on drag start
+                selectZone(dropZone);
+                
+                const offsetX = e.clientX - dropZone.getBoundingClientRect().left;
+                const offsetY = e.clientY - dropZone.getBoundingClientRect().top;
+                
+                function onMouseMove(e) {
+                    const rect = templatePreview.getBoundingClientRect();
+                    let newX = e.clientX - rect.left - offsetX;
+                    let newY = e.clientY - rect.top - offsetY;
+                    
+                    // Keep within bounds
+                    newX = Math.max(0, Math.min(newX, rect.width - dropZone.offsetWidth));
+                    newY = Math.max(0, Math.min(newY, rect.height - dropZone.offsetHeight));
+                    
+                    dropZone.style.left = newX + 'px';
+                    dropZone.style.top = newY + 'px';
+                }
+                
+                function onMouseUp() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+            
+            // Remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (selectedDropZone === dropZone) {
+                     document.getElementById('styleEditor').classList.add('hidden');
+                     selectedDropZone = null;
+                }
+                dropZone.remove();
+            });
+            dropZone.appendChild(removeBtn);
+            
+            templatePreview.appendChild(dropZone);
+            dropZones.push(dropZone);
+            
+            // Select newly created zone
+            selectZone(dropZone);
+        }
+
+        function selectZone(zone) {
+            // Remove active class from old zone
+            if (selectedDropZone) selectedDropZone.classList.remove('selected-zone');
+            
+            selectedDropZone = zone;
+            selectedDropZone.classList.add('selected-zone');
+            
+            // Show editor
+            const editor = document.getElementById('styleEditor');
+            editor.classList.remove('hidden');
+            
+            // Update Editor Values from Zone
+            document.getElementById('editingFieldName').textContent = headers[zone.dataset.headerIndex];
+            document.getElementById('editFontSize').value = zone.dataset.fontSize || 20;
+            document.getElementById('editColor').value = zone.dataset.color || '#000000';
+            document.getElementById('editFontFamily').value = zone.dataset.fontFamily || "'Segoe UI', sans-serif";
+        }
+
+        function resetMapping() {
+            const templatePreview = document.getElementById('templatePreview');
+            const dropZones = templatePreview.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => zone.remove());
+            
+            selectedDropZone = null;
+            document.getElementById('styleEditor').classList.add('hidden');
+            showStatus('Semua kedudukan telah direset', 'info');
+        }
+
+        // ============================================
+        // CERTIFICATE GENERATION (UPDATED Logic)
+        // ============================================
+        function generateCertificates() {
+            if (!templateDataURL) {
+                showStatus('Sila muat naik template sijil dahulu!', 'error');
+                return;
             }
             
-            const fName = (document.getElementById('subject').value || "Laporan").replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-            const fTime = (document.getElementById('reportTime').value || "").replace(":", "");
-            const fileName = `${fName}_${fTime}.pdf`;
+            if (!excelData || excelData.length === 0) {
+                showStatus('Sila muat naik fail Excel dahulu!', 'error');
+                return;
+            }
+            
+            const templatePreview = document.getElementById('templatePreview');
+            const dropZones = templatePreview.querySelectorAll('.drop-zone');
+            const templateImg = document.getElementById('certificateTemplate');
+            
+            if (dropZones.length === 0) {
+                showStatus('Sila letakkan field pada template dahulu!', 'error');
+                return;
+            }
+            
+            const previewContainer = document.getElementById('previewContainer');
+            previewContainer.innerHTML = '';
+            
+            // Get Mapping Dimensions (Original reference)
+            const mapWidth = templatePreview.offsetWidth;
+            const mapHeight = templatePreview.offsetHeight;
+            
+            // Map field positions as PERCENTAGES to avoid position jumping
+            // Cikgu AI Edit: Ditambah offset (7px) untuk padding(5)+border(2) agar text tak 'lari' bila dijana
+            const offsetCorrection = 7;
+            const fieldConfigs = Array.from(dropZones).map(zone => {
+                return {
+                    headerIndex: parseInt(zone.dataset.headerIndex),
+                    leftPct: ((zone.offsetLeft + offsetCorrection) / mapWidth) * 100,
+                    topPct: ((zone.offsetTop + offsetCorrection) / mapHeight) * 100,
+                    fontSize: parseInt(zone.dataset.fontSize),
+                    color: zone.dataset.color,
+                    fontFamily: zone.dataset.fontFamily
+                };
+            });
+            
+            // Generate certificate for each row
+            excelData.forEach((row, rowIndex) => {
+                const certificate = document.createElement('div');
+                certificate.className = 'certificate-preview';
+                
+                // Use IMG tag for background to ensure perfect scaling ratio
+                const bgImg = document.createElement('img');
+                bgImg.src = templateDataURL;
+                bgImg.className = 'bg-img';
+                certificate.appendChild(bgImg);
+                
+                // Add fields
+                fieldConfigs.forEach(config => {
+                    const field = document.createElement('div');
+                    field.className = 'preview-field';
+                    
+                    // Apply Percentage Positions
+                    field.style.left = config.leftPct + '%';
+                    field.style.top = config.topPct + '%';
+                    
+                    // Apply Styles
+                    field.style.fontSize = config.fontSize + 'px';
+                    field.style.color = config.color;
+                    field.style.fontFamily = config.fontFamily;
+                    field.style.fontWeight = 'bold';
+                    // Cikgu AI: Apply center transform
+                    field.style.transform = 'translate(-50%, 0)';
+                    
+                    field.textContent = row[config.headerIndex] || '';
+                    
+                    certificate.appendChild(field);
+                });
+                
+                previewContainer.appendChild(certificate);
+            });
+            
+            document.getElementById('previewCard').classList.remove('hidden');
+            certificatesGenerated = true;
+            
+            showStatus(`Berjaya jana ${excelData.length} sijil!`, 'success');
+        }
 
-            const pdfBlob = doc.output('blob');
-            const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+        // ============================================
+        // PRINT & EXPORT
+        // ============================================
+        function printCertificates() {
+            if (!certificatesGenerated) {
+                showStatus('Sila jana preview sijil dahulu!', 'error');
+                return;
+            }
+            window.print();
+        }
 
-            if (navigator.share) {
-                try {
-                    await navigator.share({ 
-                        files: [file], 
-                        title: title, 
-                        text: 'Berikut adalah laporan aktiviti sekolah yang telah dijana.' 
+        async function downloadAsPDF() {
+            if (!certificatesGenerated) {
+                showStatus('Sila jana preview sijil dahulu!', 'error');
+                return;
+            }
+            
+            // Cikgu AI: Menggunakan html2canvas untuk memastikan font 100% sama
+            showStatus('⏳ Sedang memproses PDF... (Ini mungkin mengambil masa untuk ketepatan font)', 'info');
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const previews = document.querySelectorAll('.certificate-preview');
+                
+                if (previews.length === 0) return;
+
+                // Create PDF
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    compress: true
+                });
+                
+                let isFirstPage = true;
+
+                for (let i = 0; i < previews.length; i++) {
+                    const el = previews[i];
+                    
+                    // Update status
+                    if (i % 5 === 0) {
+                        showStatus(`⏳ Menjana halaman ${i + 1} / ${previews.length}...`, 'info');
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+
+                    // Capture High Quality Image
+                    // Cikgu AI: Scale 3 untuk memastikan teks tajam bila dicetak
+                    const canvas = await html2canvas(el, {
+                        scale: 3,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff'
                     });
-                } catch (error) {
-                    console.log('Error sharing:', error);
+
+                    const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                    const imgProps = doc.getImageProperties(imgData);
+                    
+                    // Logic Orientation
+                    const orientation = imgProps.width > imgProps.height ? 'l' : 'p';
+                    
+                    // Tambah page baru
+                    doc.addPage([imgProps.width, imgProps.height], orientation);
+                    doc.addImage(imgData, 'JPEG', 0, 0, imgProps.width, imgProps.height);
                 }
-            } else {
-                alert("Fungsi kongsi tidak disokong pada peranti ini. Sila guna butang Muat Turun.");
+
+                // Cikgu AI: Buang page pertama yang kosong (default jsPDF)
+                doc.deletePage(1);
+
+                doc.save('Sijil-Pukal-Pro.pdf');
+                showStatus('✅ PDF berjaya dimuat turun dengan Font Asal!', 'success');
+                
+            } catch (err) {
+                console.error(err);
+                showStatus('Ralat: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function clearAll() {
+            document.getElementById('templateUpload').value = '';
+            document.getElementById('excelUpload').value = '';
+            
+            document.getElementById('certificateTemplate').src = '';
+            document.getElementById('certificateTemplate').style.display = 'none';
+            document.getElementById('templatePreviewContainer').classList.add('hidden');
+            document.getElementById('excelStatus').classList.add('hidden');
+            document.getElementById('excelStatus').innerHTML = '';
+            document.getElementById('mappingSection').classList.add('hidden');
+            document.getElementById('headersContainer').innerHTML = '';
+            document.getElementById('previewContainer').innerHTML = '';
+            document.getElementById('previewCard').classList.add('hidden');
+            document.getElementById('styleEditor').classList.add('hidden');
+            
+            templateDataURL = null;
+            excelData = null;
+            headers = [];
+            dropZones = [];
+            certificatesGenerated = false;
+            selectedDropZone = null;
+            
+            resetMapping();
+            showStatus('Semua telah dikosongkan!', 'info');
+        }
+
+        function showStatus(message, type) {
+            let statusDiv = document.getElementById('globalStatus');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'globalStatus';
+                statusDiv.style.position = 'fixed';
+                statusDiv.style.top = '20px';
+                statusDiv.style.right = '20px';
+                statusDiv.style.zIndex = '1000';
+                document.body.appendChild(statusDiv);
+            }
+            
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function setupDragDrop(elementId, callback) {
+            const element = document.getElementById(elementId);
+            
+            element.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                element.style.borderColor = '#10b981';
+                element.style.backgroundColor = '#f0fdf4';
+            });
+            
+            element.addEventListener('dragleave', function() {
+                element.style.borderColor = '#3367d6';
+                element.style.backgroundColor = '';
+            });
+            
+            element.addEventListener('drop', function(e) {
+                e.preventDefault();
+                element.style.borderColor = '#3367d6';
+                element.style.backgroundColor = '';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    const event = { dataTransfer: e.dataTransfer };
+                    callback(event);
+                }
+            });
+        }
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
             }
         }
     </script>
