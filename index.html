@@ -213,7 +213,11 @@
             font-weight: bold;
             cursor: move;
             z-index: 10;
-            white-space: normal; /* Allow wrapping */
+            
+            /* Cikgu AI: Fix for text wrapping and spacing */
+            white-space: pre-wrap; /* Preserves Excel spaces and newlines */
+            word-break: normal; /* Prevents awkward word splitting */
+            overflow-wrap: break-word; /* Wraps long words only if necessary */
             line-height: 1.2;
             user-select: none;
             transition: background 0.2s;
@@ -222,7 +226,6 @@
             resize: both;
             overflow: hidden;
             width: 200px;
-            word-break: break-word;
         }
 
         /* Cikgu AI: Style Khas untuk Selected Zone dengan Garisan Grid */
@@ -408,13 +411,15 @@
         .preview-field {
             position: absolute;
             line-height: 1.2;
-            white-space: normal;
+            /* Cikgu AI: Match drop-zone formatting */
+            white-space: pre-wrap;
+            word-break: normal;
+            overflow-wrap: break-word;
             /* transform removed to support top-left positioning */
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            word-wrap: break-word;
         }
 
         .hidden {
@@ -800,6 +805,7 @@
 
             const updateStyle = () => {
                 if (selectedDropZone) {
+                    fontSizeInput.disabled = false;
                     selectedDropZone.style.fontSize = fontSizeInput.value + 'px';
                     selectedDropZone.style.color = colorInput.value;
                     selectedDropZone.style.fontFamily = fontFamilyInput.value;
@@ -1044,11 +1050,11 @@
             dropZone.style.left = adjustedX + 'px';
             dropZone.style.top = y + 'px';
             dropZone.style.width = defaultWidth + 'px';
-            dropZone.style.height = 'auto'; // allow initial auto height
+            dropZone.style.height = '50px'; // Cikgu AI: Fixed height for auto-font calculation
 
             dropZone.textContent = headers[headerIndex];
             
-            // Default Styles
+            // Default Styles (Will be overridden by Auto Size immediately)
             dropZone.style.fontSize = '20px';
             dropZone.style.color = '#000000';
             dropZone.style.fontFamily = "'Segoe UI', sans-serif";
@@ -1062,6 +1068,27 @@
             dropZone.dataset.fontFamily = "'Segoe UI', sans-serif";
             dropZone.dataset.textAlign = 'center';
             dropZone.dataset.verticalAlign = 'center';
+            
+            // Cikgu AI: Auto Font Size Logic via ResizeObserver
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    // Logic: Font size ~ 45% of box height to fit text nicely
+                    const h = entry.contentRect.height;
+                    if(h < 15) return; // ignore too small
+                    
+                    const autoFontSize = Math.max(10, Math.floor(h * 0.45)); // 0.45 factor allows padding & descenders
+                    
+                    dropZone.style.fontSize = autoFontSize + 'px';
+                    dropZone.dataset.fontSize = autoFontSize;
+                    
+                    // Sync with editor if selected
+                    if(selectedDropZone === dropZone) {
+                        const fontSizeInput = document.getElementById('editFontSize');
+                        if(fontSizeInput) fontSizeInput.value = autoFontSize;
+                    }
+                }お知らせ
+            });
+            resizeObserver.observe(dropZone);
 
             // SELECT FUNCTION (Show Editor)
             dropZone.addEventListener('click', function(e) {
