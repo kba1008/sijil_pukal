@@ -144,6 +144,20 @@
             line-height: 0;
         }
 
+        /* Cikgu AI: Grid Overlay untuk Ketepatan Tinggi */
+        .grid-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            background-size: 20px 20px;
+            background-image:
+                linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px);
+            z-index: 5;
+            display: none;
+        }
+        .grid-overlay.active { display: block; }
+
         #certificateTemplate {
             max-width: 100%;
             max-height: 600px;
@@ -298,7 +312,7 @@
             gap: 12px;
             margin-top: 20px;
             flex-wrap: wrap;
-        }
+        } 
 
         button {
             padding: 12px 24px;
@@ -344,6 +358,13 @@
             border: 1px solid #cbd5e1;
         }
         .btn-secondary:hover { background: #f1f5f9; }
+
+        /* Cikgu AI: Social Share Button Style */
+        .btn-info {
+            background: #0ea5e9;
+            color: white;
+        }
+        .btn-info:hover { background: #0284c7; }
 
         /* Preview Section */
         #previewSection {
@@ -466,7 +487,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.0</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar)</p>
         </header>
 
         <div class="card">
@@ -482,13 +503,15 @@
             <div id="templatePreviewContainer" class="hidden">
                 <h3 style="margin-bottom: 15px; color: var(--text-main);">📸 Paparan Template:</h3>
                 <div id="templatePreview">
+                    <!-- Grid Overlay added by Cikgu AI -->
+                    <div id="gridOverlay" class="grid-overlay"></div>
                     <img id="certificateTemplate" alt="Template Sijil">
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2 class="card-title"><span>📊</span> 2. Muat Naik Pangkalan Data (Excel)</h2>
+            <h2 class="card-title"><span>📊</span> 2. Muat Naik Pangkalan Data</h2>
             <div class="upload-section">
                 <div class="upload-box" id="excelDropZone">
                     <i style="font-style: normal; font-size: 2em;">📋</i>
@@ -496,6 +519,14 @@
                     <p style="font-size: 0.85em; opacity: 0.7;">(Sokongan: XLSX, XLS, CSV)</p>
                     <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv">
                 </div>
+            </div>
+
+            <!-- Cikgu AI: Pilihan Link Google Sheet -->
+            <div style="text-align: center; margin: 15px 0; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">- ATAU GUNAKAN LINK -</div>
+            
+            <div class="style-controls" style="justify-content: center; gap: 10px; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <input type="text" id="gSheetUrl" class="style-input" style="flex:1; min-width: 250px;" placeholder="Tampal Link Google Sheet (Mesti 'Published to Web')">
+                <button class="btn-info" id="loadGSheetBtn" style="padding: 8px 16px; font-size: 0.9em;">☁️ Muat Link</button>
             </div>
             
             <div id="excelStatus" class="hidden"></div>
@@ -634,6 +665,9 @@
                     <button class="btn-warning" id="resetMappingBtn">
                         🔄 Reset Kedudukan
                     </button>
+                    <button class="btn-secondary" id="toggleGridBtn">
+                         📏 Grid Panduan
+                    </button>
                     <button class="btn-primary" id="generateBtnMain">
                         🎨 Jana Preview
                     </button>
@@ -647,6 +681,7 @@
                 <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
                 <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
                 <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF</button>
+                <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
                 <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
             
@@ -692,6 +727,9 @@
             document.getElementById('excelUpload').addEventListener('change', handleExcelUpload);
             document.getElementById('excelDropZone').addEventListener('click', () => document.getElementById('excelUpload').click());
             
+            // Cikgu AI: Google Sheet Load
+            document.getElementById('loadGSheetBtn').addEventListener('click', handleGSheetLoad);
+
             // Generate certificates
             document.getElementById('generateBtn').addEventListener('click', generateCertificates);
             document.getElementById('generateBtnMain').addEventListener('click', generateCertificates);
@@ -702,12 +740,18 @@
             // Download PDF
             document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
             
+            // Cikgu AI: Share PDF
+            document.getElementById('shareBtn').addEventListener('click', shareCertificates);
+
             // Clear all
             document.getElementById('clearAllBtn').addEventListener('click', clearAll);
             
             // Reset mapping
             document.getElementById('resetMappingBtn').addEventListener('click', resetMapping);
             
+            // Cikgu AI: Toggle Grid
+            document.getElementById('toggleGridBtn').addEventListener('click', toggleGrid);
+
             // Drag and drop for template
             setupDragDrop('templateDropZone', handleTemplateUpload);
             setupDragDrop('excelDropZone', handleExcelUpload);
@@ -767,6 +811,14 @@
             selectedDropZone.style.left = x + 'px';
             selectedDropZone.style.top = y + 'px';
         }
+        
+        // Cikgu AI: Toggle Grid Function
+        function toggleGrid() {
+            const grid = document.getElementById('gridOverlay');
+            grid.classList.toggle('active');
+            const btn = document.getElementById('toggleGridBtn');
+            btn.textContent = grid.classList.contains('active') ? '📏 Tutup Grid' : '📏 Grid Panduan';
+        }
 
         // ============================================
         // TEMPLATE HANDLING
@@ -793,8 +845,40 @@
         }
 
         // ============================================
-        // EXCEL HANDLING
+        // EXCEL & DATA HANDLING (UPDATED)
         // ============================================
+        
+        // Helper to process workbook object (from file or url)
+        function processWorkbook(workbook) {
+             try {
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                
+                if (jsonData.length === 0) {
+                    showStatus('Fail data kosong!', 'error');
+                    return;
+                }
+                
+                headers = jsonData[0]; // First row is headers
+                excelData = jsonData.slice(1); // Rest is data
+                
+                document.getElementById('excelStatus').innerHTML = `
+                    <div class="status-success">
+                        ✅ Berjaya muat naik: ${excelData.length} rekod dengan ${headers.length} medan
+                    </div>
+                `;
+                document.getElementById('excelStatus').classList.remove('hidden');
+                
+                displayHeadersForMapping();
+                document.getElementById('mappingSection').classList.remove('hidden');
+                
+                showStatus(`Berjaya baca ${excelData.length} rekod!`, 'success');
+            } catch (error) {
+                 console.error('Error processing workbook:', error);
+                 showStatus('Ralat memproses data: ' + error.message, 'error');
+            }
+        }
+
         function handleExcelUpload(event) {
             const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
             if (!file) return;
@@ -804,35 +888,44 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-                    
-                    if (jsonData.length === 0) {
-                        showStatus('Fail Excel kosong!', 'error');
-                        return;
-                    }
-                    
-                    headers = jsonData[0]; // First row is headers
-                    excelData = jsonData.slice(1); // Rest is data
-                    
-                    document.getElementById('excelStatus').innerHTML = `
-                        <div class="status-success">
-                            ✅ Berjaya muat naik: ${excelData.length} rekod dengan ${headers.length} medan
-                        </div>
-                    `;
-                    document.getElementById('excelStatus').classList.remove('hidden');
-                    
-                    displayHeadersForMapping();
-                    document.getElementById('mappingSection').classList.remove('hidden');
-                    
-                    showStatus(`Berjaya baca ${excelData.length} rekod dari Excel!`, 'success');
-                    
+                    processWorkbook(workbook);
                 } catch (error) {
                     console.error('Error reading Excel:', error);
                     showStatus('Ralat membaca fail Excel: ' + error.message, 'error');
                 }
             };
             reader.readAsArrayBuffer(file);
+        }
+        
+        // Cikgu AI: Function to load Google Sheet via CSV Export
+        async function handleGSheetLoad() {
+            const urlInput = document.getElementById('gSheetUrl').value;
+            // Extract ID: looks for /d/ID/ in url
+            const idMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
+            
+            if (!idMatch) {
+                showStatus('Link Google Sheet tidak sah! Sila guna link standard.', 'error');
+                return;
+            }
+            
+            const sheetId = idMatch[1];
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+            
+            showStatus('⏳ Sedang memuat turun data dari Google Sheet...', 'info');
+            
+            try {
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error('Gagal akses URL (CORS/Private)');
+                const csvText = await response.text();
+                
+                // Parse CSV using XLSX
+                const workbook = XLSX.read(csvText, {type: 'string'});
+                processWorkbook(workbook);
+                
+            } catch (error) {
+                console.error(error);
+                showStatus('Gagal: Pastikan Sheet "Published to Web" (File > Share > Publish to web) atau Public.', 'error');
+            }
         }
 
         function displayHeadersForMapping() {
@@ -1102,7 +1195,7 @@
                 if (previews.length === 0) return;
 
                 // Create PDF
-                const doc = new jsPDF({
+                const doc = new jsPDF({ 
                     orientation: 'landscape',
                     unit: 'px',
                     compress: true
@@ -1151,12 +1244,69 @@
             }
         }
 
+        // Cikgu AI: Fungsi Share ke Media Sosial
+        async function shareCertificates() {
+            if (!certificatesGenerated) {
+                showStatus('Sila jana preview dahulu!', 'error');
+                return;
+            }
+
+            if (!navigator.share) {
+                showStatus('Pelayar anda tidak menyokong fungsi perkongsian web.', 'error');
+                return;
+            }
+
+            try {
+                showStatus('⏳ Sedang menjana fail untuk dikongsi...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                const { jsPDF } = window.jspdf;
+                const previews = document.querySelectorAll('.certificate-preview');
+                
+                if (previews.length === 0) return;
+
+                const doc = new jsPDF({ orientation: 'landscape', unit: 'px', compress: true });
+                
+                for (let i = 0; i < previews.length; i++) {
+                    if (i % 5 === 0) {
+                        showStatus(`⏳ Menjana untuk perkongsian ${i + 1} / ${previews.length}...`, 'info');
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                    const canvas = await html2canvas(previews[i], { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                    const imgProps = doc.getImageProperties(imgData);
+                    const orientation = imgProps.width > imgProps.height ? 'l' : 'p';
+                    doc.addPage([imgProps.width, imgProps.height], orientation);
+                    doc.addImage(imgData, 'JPEG', 0, 0, imgProps.width, imgProps.height);
+                }
+                doc.deletePage(1);
+
+                const pdfBlob = doc.output('blob');
+                const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Sijil Pukal Pro',
+                        text: 'Berikut adalah fail sijil yang telah dijana.'
+                    });
+                    showStatus('✅ Berjaya dikongsi!', 'success');
+                } else {
+                    showStatus('Perkongsian fail tidak disokong pada peranti ini.', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus('Ralat perkongsian: ' + err.message, 'error');
+            }
+        }
+
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
         function clearAll() {
             document.getElementById('templateUpload').value = '';
             document.getElementById('excelUpload').value = '';
+            document.getElementById('gSheetUrl').value = '';
             
             document.getElementById('certificateTemplate').src = '';
             document.getElementById('certificateTemplate').style.display = 'none';
