@@ -376,6 +376,13 @@
             color: white;
         }
         .btn-info:hover { background: #0284c7; }
+        
+        /* Cikgu AI: Word/DOCX Button */
+        .btn-word {
+            background: #2b579a;
+            color: white;
+        }
+        .btn-word:hover { background: #1e3f72; }
 
         /* Preview Section */
         #previewSection {
@@ -717,7 +724,8 @@
             <div class="btn-group">
                 <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
                 <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
-                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF (Jawi/Rumi)</button>
+                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF</button>
+                <button class="btn-word" id="downloadDocxBtn">💾 Simpan DOCX (Editable)</button>
                 <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
                 <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
@@ -776,6 +784,9 @@
             
             // Download PDF
             document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
+
+            // Download DOCX
+            document.getElementById('downloadDocxBtn').addEventListener('click', downloadAsDOCX);
             
             // Cikgu AI: Share PDF
             document.getElementById('shareBtn').addEventListener('click', shareCertificates);
@@ -1438,6 +1449,121 @@
                 console.error(error);
                 showStatus('Ralat: ' + error.message, 'error');
             }
+        }
+        
+        // Cikgu AI: Fungsi Eksport DOCX (HTML Trick)
+        function downloadAsDOCX() {
+            if (!certificatesGenerated) {
+                showStatus('Sila jana preview sijil dahulu!', 'error');
+                return;
+            }
+
+            showStatus('⏳ Sedang menyusun dokumen Word...', 'info');
+
+            const templateImg = document.getElementById('certificateTemplate');
+            const naturalWidth = templateImg.naturalWidth;
+            const naturalHeight = templateImg.naturalHeight;
+            const previewWidth = document.getElementById('templatePreview').offsetWidth;
+            
+            // Scale factor to map visual preview back to original image resolution
+            const scale = naturalWidth / previewWidth;
+            const isLandscape = naturalWidth > naturalHeight;
+            
+            // Word XML for Print View
+            const wordXML = `
+                <!--[if gte mso 9]><xml>
+                <w:WordDocument>
+                <w:View>Print</w:View>
+                <w:Zoom>90</w:Zoom>
+                </w:WordDocument>
+                </xml><![endif]-->
+            `;
+
+            let htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    ${wordXML}
+                    <style>
+                        @page {
+                            size: ${isLandscape ? 'landscape' : 'portrait'};
+                            margin: 0;
+                        }
+                        body { margin:0; padding:0; font-family: 'Segoe UI', 'Times New Roman', serif; }
+                        .page-break { page-break-after: always; }
+                    </style>
+                </head>
+                <body>
+            `;
+
+            const dropZones = document.querySelectorAll('.drop-zone');
+            const fieldConfigs = Array.from(dropZones).map(zone => {
+                return {
+                    headerIndex: parseInt(zone.dataset.headerIndex),
+                    leftPct: ((zone.offsetLeft) / previewWidth) * 100,
+                    topPct: ((zone.offsetTop) / templateImg.parentElement.offsetHeight) * 100,
+                    widthPct: (zone.offsetWidth / previewWidth) * 100,
+                    heightPct: (zone.offsetHeight / templateImg.parentElement.offsetHeight) * 100,
+                    fontSize: parseFloat(zone.dataset.fontSize) * scale, // Scale font up to match original image
+                    color: zone.dataset.color,
+                    fontFamily: zone.dataset.fontFamily,
+                    textAlign: zone.dataset.textAlign || 'center',
+                };
+            });
+
+            excelData.forEach((row, idx) => {
+                htmlContent += `<div style="position:relative; width:${naturalWidth}px; height:${naturalHeight}px; overflow:hidden;">`;
+                
+                // Background Image (Absolute with negative z-index to act as BG)
+                htmlContent += `<img src="${templateDataURL}" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;">`;
+
+                // Text Fields
+                fieldConfigs.forEach(config => {
+                    const text = row[config.headerIndex] || '';
+                    // Cikgu AI: Auto-detect RTL for Jawi/Arabic
+                    const rtlStyle = isArabic(text) ? 'direction:rtl;' : '';
+                    
+                    // Mapping styles to inline HTML for Word
+                    htmlContent += `
+                        <div style="
+                            position: absolute;
+                            left: ${config.leftPct}%;
+                            top: ${config.topPct}%;
+                            width: ${config.widthPct}%;
+                            height: ${config.heightPct}%;
+                            font-size: ${config.fontSize}px;
+                            color: ${config.color};
+                            font-family: ${config.fontFamily.replace(/['"]/g, '')};
+                            text-align: ${config.textAlign};
+                            ${rtlStyle}
+                            display: flex;
+                            align-items: center;
+                            justify-content: ${config.textAlign === 'center' ? 'center' : (config.textAlign === 'right' ? 'flex-end' : 'flex-start')};
+                        ">
+                            ${text}
+                        </div>
+                    `;
+                });
+
+                htmlContent += `</div>`;
+                if (idx < excelData.length - 1) {
+                    htmlContent += `<br class="page-break">`;
+                }
+            });
+
+            htmlContent += `</body></html>`;
+
+            // Create Blob and Download
+            const blob = new Blob([htmlContent], { type: 'application/vnd.ms-word' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Sijil-Pukal-Editable.doc'; // .doc opens more reliably with HTML content in Word
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatus('✅ Fail Word berjaya dimuat turun! (Pilih "Print Layout" di Word jika susunan lari)', 'success');
         }
 
         // Cikgu AI: Fungsi Share ke Media Sosial (Updated to use Editable PDF)
