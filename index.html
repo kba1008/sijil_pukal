@@ -6,8 +6,8 @@
     <title>Pencetak Sijil Pukal Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <!-- Cikgu AI: Menambah font 'Inter' untuk gaya korporat moden -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cikgu AI: Menambah font 'Inter' dan 'Amiri' (Untuk Jawi) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
@@ -504,7 +504,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar - Teks Boleh Edit)</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.2 (Sokongan Jawi & PDF Pintar)</p>
         </header>
 
         <div class="card">
@@ -572,6 +572,7 @@
                         <div class="style-group">
                             <label>Tipografi</label>
                             <select id="editFontFamily" class="style-input">
+                                <option value="'Amiri', serif">Jawi / Arab (Amiri)</option>
                                 <option value="'Segoe UI', sans-serif">Segoe UI (Standard)</option>
                                 <option value="'Times New Roman', serif">Times New Roman</option>
                                 <option value="'Arial', sans-serif">Arial</option>
@@ -716,7 +717,7 @@
             <div class="btn-group">
                 <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
                 <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
-                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF (Editable)</button>
+                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF (Jawi/Rumi)</button>
                 <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
                 <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
@@ -1290,6 +1291,12 @@
             }
             window.print();
         }
+
+        // Cikgu AI: Helper to detect Arabic/Jawi Characters
+        function isArabic(text) {
+            const arabicPattern = /[\u0600-\u06FF\u0750-\u077F]/;
+            return arabicPattern.test(text);
+        }
         
         // Cikgu AI: Helper function untuk jana PDF dengan teks boleh edit
         async function createPDFDocument() {
@@ -1320,10 +1327,11 @@
                 // Draw Background Image
                 doc.addImage(bgImg, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                // Draw Text Fields as Vectors (Editable Text)
+                // Draw Text Fields
                 const fields = container.querySelectorAll('.preview-field');
                 
-                fields.forEach(field => {
+                // Gunakan for...of loop untuk support async/await (untuk Jawi)
+                for (const field of fields) {
                     const style = window.getComputedStyle(field);
                     const text = field.innerText; // Use innerText to preserve newlines
                     
@@ -1332,64 +1340,80 @@
                     const y = field.offsetTop;
                     const w = field.offsetWidth;
                     const h = field.offsetHeight;
-                    
-                    // Styles
-                    const fontSize = parseFloat(style.fontSize);
-                    const color = style.color; // rgb()
-                    const align = style.textAlign; // left, center, right
-                    const vAlign = style.alignItems; // flex-start, center, flex-end
-                    const fontFamily = style.fontFamily.toLowerCase();
-                    const fontWeight = style.fontWeight;
-                    
-                    // Set Color
-                    const rgb = color.match(/\d+/g);
-                    if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
-                    
-                    // Set Font (Basic Mapping to Standard PDF Fonts)
-                    let pdfFont = 'helvetica';
-                    if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
-                    if (fontFamily.includes('mono')) pdfFont = 'courier';
-                    
-                    let pdfType = 'normal';
-                    if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
-                    
-                    doc.setFont(pdfFont, pdfType);
-                    doc.setFontSize(fontSize);
-                    
-                    // Alignment Logic (X Coordinate)
-                    let textX = x;
-                    let pdfAlign = 'left';
-                    
-                    if (align === 'center') {
-                        textX = x + (w / 2);
-                        pdfAlign = 'center';
-                    } else if (align === 'right') {
-                        textX = x + w;
-                        pdfAlign = 'right';
+
+                    // Cikgu AI: Semak jika teks mengandungi Jawi/Arab
+                    if (isArabic(text)) {
+                        // JIKA JAWI: Convert kepada Imej (Supaya bentuk huruf bersambung betul)
+                        // Ini fixing masalah "Alien Text" atau huruf terpisah
+                        try {
+                            const canvas = await html2canvas(field, { 
+                                backgroundColor: null,
+                                scale: 2 // Higher scale for better quality
+                            });
+                            const imgData = canvas.toDataURL('image/png');
+                            doc.addImage(imgData, 'PNG', x, y, w, h);
+                        } catch (err) {
+                            console.error("Ralat rendering Jawi:", err);
+                        }
+                    } else {
+                        // JIKA RUMI: Kekalkan sebagai Teks Vector (Boleh Edit)
+                        const fontSize = parseFloat(style.fontSize);
+                        const color = style.color; // rgb()
+                        const align = style.textAlign; // left, center, right
+                        const vAlign = style.alignItems; // flex-start, center, flex-end
+                        const fontFamily = style.fontFamily.toLowerCase();
+                        const fontWeight = style.fontWeight;
+                        
+                        // Set Color
+                        const rgb = color.match(/\d+/g);
+                        if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
+                        
+                        // Set Font (Basic Mapping to Standard PDF Fonts)
+                        let pdfFont = 'helvetica';
+                        if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
+                        if (fontFamily.includes('mono')) pdfFont = 'courier';
+                        
+                        let pdfType = 'normal';
+                        if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
+                        
+                        doc.setFont(pdfFont, pdfType);
+                        doc.setFontSize(fontSize);
+                        
+                        // Alignment Logic (X Coordinate)
+                        let textX = x;
+                        let pdfAlign = 'left';
+                        
+                        if (align === 'center') {
+                            textX = x + (w / 2);
+                            pdfAlign = 'center';
+                        } else if (align === 'right') {
+                            textX = x + w;
+                            pdfAlign = 'right';
+                        }
+                        
+                        // Text Wrapping & Vertical Alignment (Y Coordinate)
+                        const lines = doc.splitTextToSize(text, w);
+                        const lineHeight = fontSize * 1.15; // approximate line height
+                        const blockHeight = lines.length * lineHeight;
+                        
+                        let textY = y;
+                        
+                        // Adjust Y based on vertical alignment
+                        if (vAlign === 'center') {
+                            textY = y + (h - blockHeight) / 2;
+                            if (textY < y) textY = y; // Clamp top
+                        } else if (vAlign === 'flex-end') {
+                            textY = y + h - blockHeight;
+                        }
+                        
+                        // Render Text
+                        doc.text(lines, textX, textY, {
+                            align: pdfAlign,
+                            baseline: 'top',
+                            lineHeightFactor: 1.15
+                        });
                     }
-                    
-                    // Text Wrapping & Vertical Alignment (Y Coordinate)
-                    const lines = doc.splitTextToSize(text, w);
-                    const lineHeight = fontSize * 1.15; // approximate line height
-                    const blockHeight = lines.length * lineHeight;
-                    
-                    let textY = y;
-                    
-                    // Adjust Y based on vertical alignment
-                    if (vAlign === 'center') {
-                        textY = y + (h - blockHeight) / 2;
-                        if (textY < y) textY = y; // Clamp top
-                    } else if (vAlign === 'flex-end') {
-                        textY = y + h - blockHeight;
-                    }
-                    
-                    // Render Text
-                    doc.text(lines, textX, textY, {
-                        align: pdfAlign,
-                        baseline: 'top',
-                        lineHeightFactor: 1.15
-                    });
-                });
+                }
             }
             
             return doc;
@@ -1401,14 +1425,14 @@
                 return;
             }
             
-            showStatus('⏳ Sedang menjana PDF (Teks Boleh Edit)...', 'info');
+            showStatus('⏳ Sedang menjana PDF (Pintar: Jawi=Imej, Rumi=Teks)...', 'info');
             await new Promise(r => setTimeout(r, 100));
             
             try {
                 const doc = await createPDFDocument();
                 if (doc) {
                     doc.save('Sijil-Pukal-Pro-Editable.pdf');
-                    showStatus('✅ PDF berjaya dimuat turun (Boleh Edit)!', 'success');
+                    showStatus('✅ PDF berjaya dimuat turun!', 'success');
                 }
             } catch (error) {
                 console.error(error);
@@ -1439,10 +1463,10 @@
                     const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
 
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
+                        await navigator.share({ 
                             files: [file],
                             title: 'Sijil Pukal Pro',
-                            text: 'Berikut adalah fail sijil yang telah dijana (Boleh Edit).'
+                            text: 'Berikut adalah fail sijil yang telah dijana.'
                         });
                         showStatus('✅ Berjaya dikongsi!', 'success');
                     } else {
