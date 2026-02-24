@@ -499,7 +499,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (bijak)</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar)</p>
         </header>
 
         <div class="card">
@@ -670,6 +670,25 @@
                                 <option value="'Franklin Gothic Medium', sans-serif">Franklin Gothic Medium</option>
                             </select>
                         </div>
+                        
+                        <!-- Cikgu AI: Alignment Controls -->
+                        <div class="style-group">
+                            <label>Susunan (H)</label>
+                            <select id="editTextAlign" class="style-input">
+                                <option value="left">Kiri</option>
+                                <option value="center" selected>Tengah</option>
+                                <option value="right">Kanan</option>
+                                <option value="justify">Justify</option>
+                            </select>
+                        </div>
+                        <div class="style-group">
+                            <label>Susunan (V)</label>
+                            <select id="editVerticalAlign" class="style-input">
+                                <option value="flex-start">Atas</option>
+                                <option value="center" selected>Tengah</option>
+                                <option value="flex-end">Bawah</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -776,6 +795,8 @@
             const fontSizeInput = document.getElementById('editFontSize');
             const colorInput = document.getElementById('editColor');
             const fontFamilyInput = document.getElementById('editFontFamily');
+            const textAlignInput = document.getElementById('editTextAlign');
+            const verticalAlignInput = document.getElementById('editVerticalAlign');
 
             const updateStyle = () => {
                 if (selectedDropZone) {
@@ -783,16 +804,36 @@
                     selectedDropZone.style.color = colorInput.value;
                     selectedDropZone.style.fontFamily = fontFamilyInput.value;
                     
+                    // Alignment Logic
+                    const hAlign = textAlignInput.value;
+                    const vAlign = verticalAlignInput.value;
+                    
+                    selectedDropZone.style.textAlign = hAlign;
+                    selectedDropZone.style.alignItems = vAlign;
+                    
+                    // Auto-adjust justify-content based on text-align for single lines
+                    if (hAlign === 'left' || hAlign === 'justify') {
+                        selectedDropZone.style.justifyContent = 'flex-start';
+                    } else if (hAlign === 'right') {
+                        selectedDropZone.style.justifyContent = 'flex-end';
+                    } else {
+                        selectedDropZone.style.justifyContent = 'center';
+                    }
+                    
                     // Simpan data dalam dataset untuk rujukan nanti
                     selectedDropZone.dataset.fontSize = fontSizeInput.value;
                     selectedDropZone.dataset.color = colorInput.value;
                     selectedDropZone.dataset.fontFamily = fontFamilyInput.value;
+                    selectedDropZone.dataset.textAlign = hAlign;
+                    selectedDropZone.dataset.verticalAlign = vAlign;
                 }
             };
 
             fontSizeInput.addEventListener('input', updateStyle);
             colorInput.addEventListener('input', updateStyle);
             fontFamilyInput.addEventListener('change', updateStyle);
+            textAlignInput.addEventListener('change', updateStyle);
+            verticalAlignInput.addEventListener('change', updateStyle);
         }
         
         // Cikgu AI: Fungsi Pergerakan Keyboard (Mouse & Arrow Keys)
@@ -1011,10 +1052,16 @@
             dropZone.style.fontSize = '20px';
             dropZone.style.color = '#000000';
             dropZone.style.fontFamily = "'Segoe UI', sans-serif";
+            dropZone.style.textAlign = 'center';
+            dropZone.style.justifyContent = 'center';
+            dropZone.style.alignItems = 'center';
+            
             // Store defaults in dataset
             dropZone.dataset.fontSize = '20';
             dropZone.dataset.color = '#000000';
             dropZone.dataset.fontFamily = "'Segoe UI', sans-serif";
+            dropZone.dataset.textAlign = 'center';
+            dropZone.dataset.verticalAlign = 'center';
 
             // SELECT FUNCTION (Show Editor)
             dropZone.addEventListener('click', function(e) {
@@ -1091,6 +1138,8 @@
             document.getElementById('editFontSize').value = zone.dataset.fontSize || 20;
             document.getElementById('editColor').value = zone.dataset.color || '#000000';
             document.getElementById('editFontFamily').value = zone.dataset.fontFamily || "'Segoe UI', sans-serif";
+            document.getElementById('editTextAlign').value = zone.dataset.textAlign || 'center';
+            document.getElementById('editVerticalAlign').value = zone.dataset.verticalAlign || 'center';
         }
 
         function resetMapping() {
@@ -1143,7 +1192,9 @@
                     heightPct: (zone.offsetHeight / mapHeight) * 100,
                     fontSize: parseInt(zone.dataset.fontSize),
                     color: zone.dataset.color,
-                    fontFamily: zone.dataset.fontFamily
+                    fontFamily: zone.dataset.fontFamily,
+                    textAlign: zone.dataset.textAlign || 'center',
+                    verticalAlign: zone.dataset.verticalAlign || 'center'
                 };
             });
             
@@ -1174,6 +1225,18 @@
                     field.style.color = config.color;
                     field.style.fontFamily = config.fontFamily;
                     field.style.fontWeight = 'bold';
+                    
+                    // Apply Alignment
+                    field.style.textAlign = config.textAlign;
+                    field.style.alignItems = config.verticalAlign;
+                    
+                    if (config.textAlign === 'left' || config.textAlign === 'justify') {
+                        field.style.justifyContent = 'flex-start';
+                    } else if (config.textAlign === 'right') {
+                        field.style.justifyContent = 'flex-end';
+                    } else {
+                        field.style.justifyContent = 'center';
+                    }
                     
                     // Cikgu AI: Ensure text wraps within the box
                     field.textContent = row[config.headerIndex] || '';
@@ -1396,7 +1459,7 @@
                 if (e.dataTransfer.files.length > 0) {
                     const event = { dataTransfer: e.dataTransfer };
                     callback(event);
-                } veck
+                }
             });
         }
 
