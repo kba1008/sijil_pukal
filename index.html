@@ -504,7 +504,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.2 (Pintar)</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar - Teks Boleh Edit)</p>
         </header>
 
         <div class="card">
@@ -716,7 +716,7 @@
             <div class="btn-group">
                 <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
                 <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
-                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF</button>
+                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF (Editable)</button>
                 <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
                 <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
@@ -731,7 +731,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- jsPDF untuk export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Cikgu AI: html2canvas untuk ketepatan font 100% -->
+    <!-- Cikgu AI: html2canvas dikekalkan untuk legacy support jika perlu -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <script>
@@ -1086,7 +1086,7 @@
                         const fontSizeInput = document.getElementById('editFontSize');
                         if(fontSizeInput) fontSizeInput.value = autoFontSize;
                     }
-                }お知らせ
+                }
             });
             resizeObserver.observe(dropZone);
 
@@ -1290,6 +1290,110 @@
             }
             window.print();
         }
+        
+        // Cikgu AI: Helper function untuk jana PDF dengan teks boleh edit
+        async function createPDFDocument() {
+            const { jsPDF } = window.jspdf;
+            const previews = document.querySelectorAll('.certificate-preview');
+            
+            if (previews.length === 0) return null;
+
+            // Get dimensions from first preview
+            const firstContainer = previews[0];
+            // Use container size (px) for coordinate mapping
+            const pdfWidth = firstContainer.offsetWidth;
+            const pdfHeight = firstContainer.offsetHeight;
+
+            const doc = new jsPDF({ 
+                orientation: pdfWidth > pdfHeight ? 'l' : 'p',
+                unit: 'px',
+                format: [pdfWidth, pdfHeight],
+                compress: true
+            });
+
+            for (let i = 0; i < previews.length; i++) {
+                if (i > 0) doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'l' : 'p');
+
+                const container = previews[i];
+                const bgImg = container.querySelector('.bg-img');
+                
+                // Draw Background Image
+                doc.addImage(bgImg, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+                // Draw Text Fields as Vectors (Editable Text)
+                const fields = container.querySelectorAll('.preview-field');
+                
+                fields.forEach(field => {
+                    const style = window.getComputedStyle(field);
+                    const text = field.innerText; // Use innerText to preserve newlines
+                    
+                    // Coordinates & Dimensions
+                    const x = field.offsetLeft;
+                    const y = field.offsetTop;
+                    const w = field.offsetWidth;
+                    const h = field.offsetHeight;
+                    
+                    // Styles
+                    const fontSize = parseFloat(style.fontSize);
+                    const color = style.color; // rgb()
+                    const align = style.textAlign; // left, center, right
+                    const vAlign = style.alignItems; // flex-start, center, flex-end
+                    const fontFamily = style.fontFamily.toLowerCase();
+                    const fontWeight = style.fontWeight;
+                    
+                    // Set Color
+                    const rgb = color.match(/\d+/g);
+                    if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
+                    
+                    // Set Font (Basic Mapping to Standard PDF Fonts)
+                    let pdfFont = 'helvetica';
+                    if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
+                    if (fontFamily.includes('mono')) pdfFont = 'courier';
+                    
+                    let pdfType = 'normal';
+                    if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
+                    
+                    doc.setFont(pdfFont, pdfType);
+                    doc.setFontSize(fontSize);
+                    
+                    // Alignment Logic (X Coordinate)
+                    let textX = x;
+                    let pdfAlign = 'left';
+                    
+                    if (align === 'center') {
+                        textX = x + (w / 2);
+                        pdfAlign = 'center';
+                    } else if (align === 'right') {
+                        textX = x + w;
+                        pdfAlign = 'right';
+                    }
+                    
+                    // Text Wrapping & Vertical Alignment (Y Coordinate)
+                    const lines = doc.splitTextToSize(text, w);
+                    const lineHeight = fontSize * 1.15; // approximate line height
+                    const blockHeight = lines.length * lineHeight;
+                    
+                    let textY = y;
+                    
+                    // Adjust Y based on vertical alignment
+                    if (vAlign === 'center') {
+                        textY = y + (h - blockHeight) / 2;
+                        if (textY < y) textY = y; // Clamp top
+                    } else if (vAlign === 'flex-end') {
+                        textY = y + h - blockHeight;
+                    }
+                    
+                    // Render Text
+                    doc.text(lines, textX, textY, {
+                        align: pdfAlign,
+                        baseline: 'top',
+                        lineHeightFactor: 1.15
+                    });
+                });
+            }
+            
+            return doc;
+        }
 
         async function downloadAsPDF() {
             if (!certificatesGenerated) {
@@ -1297,67 +1401,22 @@
                 return;
             }
             
-            // Cikgu AI: Menggunakan html2canvas untuk memastikan font 100% sama
-            showStatus('⏳ Sedang memproses PDF... (Ini mungkin mengambil masa untuk ketepatan font)', 'info');
-            await new Promise(resolve => setTimeout(resolve, 100));
-
+            showStatus('⏳ Sedang menjana PDF (Teks Boleh Edit)...', 'info');
+            await new Promise(r => setTimeout(r, 100));
+            
             try {
-                const { jsPDF } = window.jspdf;
-                const previews = document.querySelectorAll('.certificate-preview');
-                
-                if (previews.length === 0) return;
-
-                // Create PDF
-                const doc = new jsPDF({ 
-                    orientation: 'landscape',
-                    unit: 'px',
-                    compress: true
-                });
-                
-                let isFirstPage = true;
-
-                for (let i = 0; i < previews.length; i++) {
-                    const el = previews[i];
-                    
-                    // Update status
-                    if (i % 5 === 0) {
-                        showStatus(`⏳ Menjana halaman ${i + 1} / ${previews.length}...`, 'info');
-                        await new Promise(r => setTimeout(r, 0));
-                    }
-
-                    // Capture High Quality Image
-                    // Cikgu AI: Scale 3 untuk memastikan teks tajam bila dicetak
-                    const canvas = await html2canvas(el, {
-                        scale: 3,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    });
-
-                    const imgData = canvas.toDataURL('image/jpeg', 0.90);
-                    const imgProps = doc.getImageProperties(imgData);
-                    
-                    // Logic Orientation
-                    const orientation = imgProps.width > imgProps.height ? 'l' : 'p';
-                    
-                    // Tambah page baru
-                    doc.addPage([imgProps.width, imgProps.height], orientation);
-                    doc.addImage(imgData, 'JPEG', 0, 0, imgProps.width, imgProps.height);
+                const doc = await createPDFDocument();
+                if (doc) {
+                    doc.save('Sijil-Pukal-Pro-Editable.pdf');
+                    showStatus('✅ PDF berjaya dimuat turun (Boleh Edit)!', 'success');
                 }
-
-                // Cikgu AI: Buang page pertama yang kosong (default jsPDF)
-                doc.deletePage(1);
-
-                doc.save('Sijil-Pukal-Pro.pdf');
-                showStatus('✅ PDF berjaya dimuat turun dengan Font Asal!', 'success');
-                
-            } catch (err) {
-                console.error(err);
-                showStatus('Ralat: ' + err.message, 'error');
+            } catch (error) {
+                console.error(error);
+                showStatus('Ralat: ' + error.message, 'error');
             }
         }
 
-        // Cikgu AI: Fungsi Share ke Media Sosial
+        // Cikgu AI: Fungsi Share ke Media Sosial (Updated to use Editable PDF)
         async function shareCertificates() {
             if (!certificatesGenerated) {
                 showStatus('Sila jana preview dahulu!', 'error');
@@ -1373,39 +1432,22 @@
                 showStatus('⏳ Sedang menjana fail untuk dikongsi...', 'info');
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                const { jsPDF } = window.jspdf;
-                const previews = document.querySelectorAll('.certificate-preview');
+                const doc = await createPDFDocument();
                 
-                if (previews.length === 0) return;
+                if (doc) {
+                    const pdfBlob = doc.output('blob');
+                    const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
 
-                const doc = new jsPDF({ orientation: 'landscape', unit: 'px', compress: true });
-                
-                for (let i = 0; i < previews.length; i++) {
-                    if (i % 5 === 0) {
-                        showStatus(`⏳ Menjana untuk perkongsian ${i + 1} / ${previews.length}...`, 'info');
-                        await new Promise(r => setTimeout(r, 0));
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Sijil Pukal Pro',
+                            text: 'Berikut adalah fail sijil yang telah dijana (Boleh Edit).'
+                        });
+                        showStatus('✅ Berjaya dikongsi!', 'success');
+                    } else {
+                        showStatus('Perkongsian fail tidak disokong pada peranti ini.', 'error');
                     }
-                    const canvas = await html2canvas(previews[i], { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff' });
-                    const imgData = canvas.toDataURL('image/jpeg', 0.90);
-                    const imgProps = doc.getImageProperties(imgData);
-                    const orientation = imgProps.width > imgProps.height ? 'l' : 'p';
-                    doc.addPage([imgProps.width, imgProps.height], orientation);
-                    doc.addImage(imgData, 'JPEG', 0, 0, imgProps.width, imgProps.height);
-                }
-                doc.deletePage(1);
-
-                const pdfBlob = doc.output('blob');
-                const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Sijil Pukal Pro',
-                        text: 'Berikut adalah fail sijil yang telah dijana.'
-                    });
-                    showStatus('✅ Berjaya dikongsi!', 'success');
-                } else {
-                    showStatus('Perkongsian fail tidak disokong pada peranti ini.', 'error');
                 }
             } catch (err) {
                 console.error(err);
@@ -1504,4 +1546,3 @@
     </script>
 </body>
 </html>
-
