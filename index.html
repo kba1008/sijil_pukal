@@ -198,7 +198,9 @@
 
         .drop-zone {
             position: absolute;
-            min-width: auto;
+            /* Cikgu AI: Updated for resizable box support */
+            min-width: 50px;
+            min-height: 30px;
             padding: 4px 8px;
             background: rgba(255, 255, 255, 0.8);
             border: 2px dashed var(--primary);
@@ -207,15 +209,20 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            transform: translate(-50%, 0);
             color: #000;
             font-weight: bold;
-            cursor: pointer;
+            cursor: move;
             z-index: 10;
-            white-space: nowrap;
+            white-space: normal; /* Allow wrapping */
             line-height: 1.2;
             user-select: none;
             transition: background 0.2s;
+            
+            /* Resizing capabilities */
+            resize: both;
+            overflow: hidden;
+            width: 200px;
+            word-break: break-word;
         }
 
         /* Cikgu AI: Style Khas untuk Selected Zone dengan Garisan Grid */
@@ -248,12 +255,12 @@
 
         .drop-zone .remove-btn {
             position: absolute;
-            top: -8px;
-            right: -8px;
+            top: 0;
+            right: 0;
             background: #ef4444;
             color: white;
             border: none;
-            border-radius: 50%;
+            border-bottom-left-radius: 4px;
             width: 18px;
             height: 18px;
             cursor: pointer;
@@ -262,6 +269,7 @@
             justify-content: center;
             font-size: 10px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 30;
         }
 
         #styleEditor {
@@ -399,10 +407,14 @@
 
         .preview-field {
             position: absolute;
-            line-height: normal;
-            white-space: nowrap;
-            transform: translate(-50%, 0);
+            line-height: 1.2;
+            white-space: normal;
+            /* transform removed to support top-left positioning */
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
         }
 
         .hidden {
@@ -487,7 +499,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar)</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (bijak)</p>
         </header>
 
         <div class="card">
@@ -535,7 +547,7 @@
                 <h3 style="font-size: 1.1em; color: var(--primary-dark); margin-top: 20px;">🎯 3. Pemetaan Medan Data</h3>
                 <p style="margin: 10px 0; color: var(--text-muted); font-size: 0.95em;">
                     Sila <strong>heret (drag)</strong> label di bawah ke atas template sijil. <br> 
-                    <span style="color: var(--primary); font-weight: 600;">ℹ️ Tip Pro:</span> Klik pada medan untuk aktifkan <strong>garisan grid</strong> dan gunakan <strong>Arrow Keys</strong> di keyboard untuk ketepatan pixel.
+                    <span style="color: var(--primary); font-weight: 600;">ℹ️ Tip Pro:</span> Boleh ubah saiz kotak (resize) untuk memuatkan teks panjang.
                 </p>
                 
                 <div id="headersContainer"></div>
@@ -901,14 +913,16 @@
         async function handleGSheetLoad() {
             const urlInput = document.getElementById('gSheetUrl').value;
             // Extract ID: looks for /d/ID/ in url
-            const idMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
-            
-            if (!idMatch) {
+            const idMatch = urlInput.match(times => /\/d\/([a-zA-Z0-9-_]+)/.exec(urlInput));
+            // Fix regex call safely
+            const safeMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
+
+            if (!safeMatch) {
                 showStatus('Link Google Sheet tidak sah! Sila guna link standard.', 'error');
                 return;
             }
             
-            const sheetId = idMatch[1];
+            const sheetId = safeMatch[1];
             const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
             
             showStatus('⏳ Sedang memuat turun data dari Google Sheet...', 'info');
@@ -977,12 +991,20 @@
         function createDropZone(headerIndex, x, y) {
             const templatePreview = document.getElementById('templatePreview');
             
-            // Create drop zone
+            // Cikgu AI: Create resizable drop zone
             const dropZone = document.createElement('div');
             dropZone.className = 'drop-zone';
             dropZone.dataset.headerIndex = headerIndex;
-            dropZone.style.left = x + 'px';
+            
+            // Center the initial box on the mouse (assuming default width 200px)
+            const defaultWidth = 200;
+            const adjustedX = x - (defaultWidth / 2);
+
+            dropZone.style.left = adjustedX + 'px';
             dropZone.style.top = y + 'px';
+            dropZone.style.width = defaultWidth + 'px';
+            dropZone.style.height = 'auto'; // allow initial auto height
+
             dropZone.textContent = headers[headerIndex];
             
             // Default Styles
@@ -1112,13 +1134,13 @@
             const mapHeight = templatePreview.offsetHeight;
             
             // Map field positions as PERCENTAGES to avoid position jumping
-            // Cikgu AI Edit: Ditambah offset (7px) untuk padding(5)+border(2) agar text tak 'lari' bila dijana
-            const offsetCorrection = 7;
             const fieldConfigs = Array.from(dropZones).map(zone => {
                 return {
                     headerIndex: parseInt(zone.dataset.headerIndex),
-                    leftPct: ((zone.offsetLeft + offsetCorrection) / mapWidth) * 100,
-                    topPct: ((zone.offsetTop + offsetCorrection) / mapHeight) * 100,
+                    leftPct: ((zone.offsetLeft) / mapWidth) * 100,
+                    topPct: ((zone.offsetTop) / mapHeight) * 100,
+                    widthPct: (zone.offsetWidth / mapWidth) * 100,
+                    heightPct: (zone.offsetHeight / mapHeight) * 100,
                     fontSize: parseInt(zone.dataset.fontSize),
                     color: zone.dataset.color,
                     fontFamily: zone.dataset.fontFamily
@@ -1144,15 +1166,16 @@
                     // Apply Percentage Positions
                     field.style.left = config.leftPct + '%';
                     field.style.top = config.topPct + '%';
+                    field.style.width = config.widthPct + '%';
+                    field.style.height = config.heightPct + '%';
                     
                     // Apply Styles
                     field.style.fontSize = config.fontSize + 'px';
                     field.style.color = config.color;
                     field.style.fontFamily = config.fontFamily;
                     field.style.fontWeight = 'bold';
-                    // Cikgu AI: Apply center transform
-                    field.style.transform = 'translate(-50%, 0)';
                     
+                    // Cikgu AI: Ensure text wraps within the box
                     field.textContent = row[config.headerIndex] || '';
                     
                     certificate.appendChild(field);
@@ -1373,7 +1396,7 @@
                 if (e.dataTransfer.files.length > 0) {
                     const event = { dataTransfer: e.dataTransfer };
                     callback(event);
-                }
+                } veck
             });
         }
 
