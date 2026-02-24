@@ -6,8 +6,8 @@
     <title>Pencetak Sijil Pukal Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <!-- Cikgu AI: Menambah font 'Inter' dan 'Amiri' (Untuk Jawi) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Cikgu AI: Menambah font 'Inter' untuk gaya korporat moden -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
@@ -376,13 +376,6 @@
             color: white;
         }
         .btn-info:hover { background: #0284c7; }
-        
-        /* Cikgu AI: Word/DOCX Button */
-        .btn-word {
-            background: #2b579a;
-            color: white;
-        }
-        .btn-word:hover { background: #1e3f72; }
 
         /* Preview Section */
         #previewSection {
@@ -511,7 +504,7 @@
         <header>
             <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
             <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.2 (Sokongan Jawi & PDF Pintar)</p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar - Teks Boleh Edit)</p>
         </header>
 
         <div class="card">
@@ -579,7 +572,6 @@
                         <div class="style-group">
                             <label>Tipografi</label>
                             <select id="editFontFamily" class="style-input">
-                                <option value="'Amiri', serif">Jawi / Arab (Amiri)</option>
                                 <option value="'Segoe UI', sans-serif">Segoe UI (Standard)</option>
                                 <option value="'Times New Roman', serif">Times New Roman</option>
                                 <option value="'Arial', sans-serif">Arial</option>
@@ -724,8 +716,9 @@
             <div class="btn-group">
                 <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
                 <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
-                <button class="btn-secondary" id="downloadPdfBtn">📥 Muat Turun PDF</button>
-                <button class="btn-word" id="downloadDocxBtn">💾 Simpan DOCX (Editable)</button>
+                <!-- Cikgu AI: Updated Buttons for PDF Options -->
+                <button class="btn-secondary" id="downloadPdfBtn">📥 PDF (Boleh Edit)</button>
+                <button class="btn-secondary" id="downloadFixedPdfBtn">🔒 PDF (Gambar/Kekal)</button>
                 <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
                 <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
             </div>
@@ -782,11 +775,11 @@
             // Print
             document.getElementById('printBtn').addEventListener('click', printCertificates);
             
-            // Download PDF
+            // Download PDF (Editable)
             document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
-
-            // Download DOCX
-            document.getElementById('downloadDocxBtn').addEventListener('click', downloadAsDOCX);
+            
+            // Download PDF (Fixed/Image) - Cikgu AI Added
+            document.getElementById('downloadFixedPdfBtn').addEventListener('click', downloadAsFixedPDF);
             
             // Cikgu AI: Share PDF
             document.getElementById('shareBtn').addEventListener('click', shareCertificates);
@@ -1302,12 +1295,6 @@
             }
             window.print();
         }
-
-        // Cikgu AI: Helper to detect Arabic/Jawi Characters
-        function isArabic(text) {
-            const arabicPattern = /[\u0600-\u06FF\u0750-\u077F]/;
-            return arabicPattern.test(text);
-        }
         
         // Cikgu AI: Helper function untuk jana PDF dengan teks boleh edit
         async function createPDFDocument() {
@@ -1338,11 +1325,10 @@
                 // Draw Background Image
                 doc.addImage(bgImg, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
-                // Draw Text Fields
+                // Draw Text Fields as Vectors (Editable Text)
                 const fields = container.querySelectorAll('.preview-field');
                 
-                // Gunakan for...of loop untuk support async/await (untuk Jawi)
-                for (const field of fields) {
+                fields.forEach(field => {
                     const style = window.getComputedStyle(field);
                     const text = field.innerText; // Use innerText to preserve newlines
                     
@@ -1351,80 +1337,64 @@
                     const y = field.offsetTop;
                     const w = field.offsetWidth;
                     const h = field.offsetHeight;
-
-                    // Cikgu AI: Semak jika teks mengandungi Jawi/Arab
-                    if (isArabic(text)) {
-                        // JIKA JAWI: Convert kepada Imej (Supaya bentuk huruf bersambung betul)
-                        // Ini fixing masalah "Alien Text" atau huruf terpisah
-                        try {
-                            const canvas = await html2canvas(field, { 
-                                backgroundColor: null,
-                                scale: 2 // Higher scale for better quality
-                            });
-                            const imgData = canvas.toDataURL('image/png');
-                            doc.addImage(imgData, 'PNG', x, y, w, h);
-                        } catch (err) {
-                            console.error("Ralat rendering Jawi:", err);
-                        }
-                    } else {
-                        // JIKA RUMI: Kekalkan sebagai Teks Vector (Boleh Edit)
-                        const fontSize = parseFloat(style.fontSize);
-                        const color = style.color; // rgb()
-                        const align = style.textAlign; // left, center, right
-                        const vAlign = style.alignItems; // flex-start, center, flex-end
-                        const fontFamily = style.fontFamily.toLowerCase();
-                        const fontWeight = style.fontWeight;
-                        
-                        // Set Color
-                        const rgb = color.match(/\d+/g);
-                        if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
-                        
-                        // Set Font (Basic Mapping to Standard PDF Fonts)
-                        let pdfFont = 'helvetica';
-                        if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
-                        if (fontFamily.includes('mono')) pdfFont = 'courier';
-                        
-                        let pdfType = 'normal';
-                        if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
-                        
-                        doc.setFont(pdfFont, pdfType);
-                        doc.setFontSize(fontSize);
-                        
-                        // Alignment Logic (X Coordinate)
-                        let textX = x;
-                        let pdfAlign = 'left';
-                        
-                        if (align === 'center') {
-                            textX = x + (w / 2);
-                            pdfAlign = 'center';
-                        } else if (align === 'right') {
-                            textX = x + w;
-                            pdfAlign = 'right';
-                        }
-                        
-                        // Text Wrapping & Vertical Alignment (Y Coordinate)
-                        const lines = doc.splitTextToSize(text, w);
-                        const lineHeight = fontSize * 1.15; // approximate line height
-                        const blockHeight = lines.length * lineHeight;
-                        
-                        let textY = y;
-                        
-                        // Adjust Y based on vertical alignment
-                        if (vAlign === 'center') {
-                            textY = y + (h - blockHeight) / 2;
-                            if (textY < y) textY = y; // Clamp top
-                        } else if (vAlign === 'flex-end') {
-                            textY = y + h - blockHeight;
-                        }
-                        
-                        // Render Text
-                        doc.text(lines, textX, textY, {
-                            align: pdfAlign,
-                            baseline: 'top',
-                            lineHeightFactor: 1.15
-                        });
+                    
+                    // Styles
+                    const fontSize = parseFloat(style.fontSize);
+                    const color = style.color; // rgb()
+                    const align = style.textAlign; // left, center, right
+                    const vAlign = style.alignItems; // flex-start, center, flex-end
+                    const fontFamily = style.fontFamily.toLowerCase();
+                    const fontWeight = style.fontWeight;
+                    
+                    // Set Color
+                    const rgb = color.match(/\d+/g);
+                    if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
+                    
+                    // Set Font (Basic Mapping to Standard PDF Fonts)
+                    let pdfFont = 'helvetica';
+                    if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
+                    if (fontFamily.includes('mono')) pdfFont = 'courier';
+                    
+                    let pdfType = 'normal';
+                    if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
+                    
+                    doc.setFont(pdfFont, pdfType);
+                    doc.setFontSize(fontSize);
+                    
+                    // Alignment Logic (X Coordinate)
+                    let textX = x;
+                    let pdfAlign = 'left';
+                    
+                    if (align === 'center') {
+                        textX = x + (w / 2);
+                        pdfAlign = 'center';
+                    } else if (align === 'right') {
+                        textX = x + w;
+                        pdfAlign = 'right';
                     }
-                }
+                    
+                    // Text Wrapping & Vertical Alignment (Y Coordinate)
+                    const lines = doc.splitTextToSize(text, w);
+                    const lineHeight = fontSize * 1.15; // approximate line height
+                    const blockHeight = lines.length * lineHeight;
+                    
+                    let textY = y;
+                    
+                    // Adjust Y based on vertical alignment
+                    if (vAlign === 'center') {
+                        textY = y + (h - blockHeight) / 2;
+                        if (textY < y) textY = y; // Clamp top
+                    } else if (vAlign === 'flex-end') {
+                        textY = y + h - blockHeight;
+                    }
+                    
+                    // Render Text
+                    doc.text(lines, textX, textY, {
+                        align: pdfAlign,
+                        baseline: 'top',
+                        lineHeightFactor: 1.15
+                    });
+                });
             }
             
             return doc;
@@ -1436,134 +1406,73 @@
                 return;
             }
             
-            showStatus('⏳ Sedang menjana PDF (Pintar: Jawi=Imej, Rumi=Teks)...', 'info');
+            showStatus('⏳ Sedang menjana PDF (Teks Boleh Edit)...', 'info');
             await new Promise(r => setTimeout(r, 100));
             
             try {
                 const doc = await createPDFDocument();
                 if (doc) {
                     doc.save('Sijil-Pukal-Pro-Editable.pdf');
-                    showStatus('✅ PDF berjaya dimuat turun!', 'success');
+                    showStatus('✅ PDF berjaya dimuat turun (Boleh Edit)!', 'success');
                 }
             } catch (error) {
                 console.error(error);
                 showStatus('Ralat: ' + error.message, 'error');
             }
         }
-        
-        // Cikgu AI: Fungsi Eksport DOCX (HTML Trick)
-        function downloadAsDOCX() {
+
+        // Cikgu AI: Fungsi Baru - Download PDF (Flattened/Image Based)
+        async function downloadAsFixedPDF() {
             if (!certificatesGenerated) {
                 showStatus('Sila jana preview sijil dahulu!', 'error');
                 return;
             }
-
-            showStatus('⏳ Sedang menyusun dokumen Word...', 'info');
-
-            const templateImg = document.getElementById('certificateTemplate');
-            const naturalWidth = templateImg.naturalWidth;
-            const naturalHeight = templateImg.naturalHeight;
-            const previewWidth = document.getElementById('templatePreview').offsetWidth;
             
-            // Scale factor to map visual preview back to original image resolution
-            const scale = naturalWidth / previewWidth;
-            const isLandscape = naturalWidth > naturalHeight;
+            showStatus('⏳ Sedang memproses PDF (Gambar)... Sila tunggu.', 'info');
+            // Allow UI to update
+            await new Promise(r => setTimeout(r, 100));
             
-            // Word XML for Print View
-            const wordXML = `
-                <!--[if gte mso 9]><xml>
-                <w:WordDocument>
-                <w:View>Print</w:View>
-                <w:Zoom>90</w:Zoom>
-                </w:WordDocument>
-                </xml><![endif]-->
-            `;
+            try {
+                const { jsPDF } = window.jspdf;
+                const previews = document.querySelectorAll('.certificate-preview');
+                if (previews.length === 0) return;
 
-            let htmlContent = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head>
-                    <meta charset='utf-8'>
-                    ${wordXML}
-                    <style>
-                        @page {
-                            size: ${isLandscape ? 'landscape' : 'portrait'};
-                            margin: 0;
-                        }
-                        body { margin:0; padding:0; font-family: 'Segoe UI', 'Times New Roman', serif; }
-                        .page-break { page-break-after: always; }
-                    </style>
-                </head>
-                <body>
-            `;
+                const first = previews[0];
+                const w = first.offsetWidth;
+                const h = first.offsetHeight;
+                const orientation = w > h ? 'l' : 'p';
 
-            const dropZones = document.querySelectorAll('.drop-zone');
-            const fieldConfigs = Array.from(dropZones).map(zone => {
-                return {
-                    headerIndex: parseInt(zone.dataset.headerIndex),
-                    leftPct: ((zone.offsetLeft) / previewWidth) * 100,
-                    topPct: ((zone.offsetTop) / templateImg.parentElement.offsetHeight) * 100,
-                    widthPct: (zone.offsetWidth / previewWidth) * 100,
-                    heightPct: (zone.offsetHeight / templateImg.parentElement.offsetHeight) * 100,
-                    fontSize: parseFloat(zone.dataset.fontSize) * scale, // Scale font up to match original image
-                    color: zone.dataset.color,
-                    fontFamily: zone.dataset.fontFamily,
-                    textAlign: zone.dataset.textAlign || 'center',
-                };
-            });
-
-            excelData.forEach((row, idx) => {
-                htmlContent += `<div style="position:relative; width:${naturalWidth}px; height:${naturalHeight}px; overflow:hidden;">`;
-                
-                // Background Image (Absolute with negative z-index to act as BG)
-                htmlContent += `<img src="${templateDataURL}" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;">`;
-
-                // Text Fields
-                fieldConfigs.forEach(config => {
-                    const text = row[config.headerIndex] || '';
-                    // Cikgu AI: Auto-detect RTL for Jawi/Arabic
-                    const rtlStyle = isArabic(text) ? 'direction:rtl;' : '';
-                    
-                    // Mapping styles to inline HTML for Word
-                    htmlContent += `
-                        <div style="
-                            position: absolute;
-                            left: ${config.leftPct}%;
-                            top: ${config.topPct}%;
-                            width: ${config.widthPct}%;
-                            height: ${config.heightPct}%;
-                            font-size: ${config.fontSize}px;
-                            color: ${config.color};
-                            font-family: ${config.fontFamily.replace(/['"]/g, '')};
-                            text-align: ${config.textAlign};
-                            ${rtlStyle}
-                            display: flex;
-                            align-items: center;
-                            justify-content: ${config.textAlign === 'center' ? 'center' : (config.textAlign === 'right' ? 'flex-end' : 'flex-start')};
-                        ">
-                            ${text}
-                        </div>
-                    `;
+                const doc = new jsPDF({
+                    orientation: orientation,
+                    unit: 'px',
+                    format: [w, h],
+                    compress: true
                 });
 
-                htmlContent += `</div>`;
-                if (idx < excelData.length - 1) {
-                    htmlContent += `<br class="page-break">`;
+                for (let i = 0; i < previews.length; i++) {
+                    if (i > 0) doc.addPage([w, h], orientation);
+                    
+                    // Use html2canvas to snapshot the DOM element
+                    const canvas = await html2canvas(previews[i], {
+                        scale: 2, // Better quality
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: null // Transparent background if any
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG compression
+                    doc.addImage(imgData, 'JPEG', 0, 0, w, h);
+                    
+                    // Optional: Update status for long lists
+                    if (i % 5 === 0) showStatus(`⏳ Memproses halaman ${i+1}/${previews.length}...`, 'info');
                 }
-            });
 
-            htmlContent += `</body></html>`;
-
-            // Create Blob and Download
-            const blob = new Blob([htmlContent], { type: 'application/vnd.ms-word' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'Sijil-Pukal-Editable.doc'; // .doc opens more reliably with HTML content in Word
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showStatus('✅ Fail Word berjaya dimuat turun! (Pilih "Print Layout" di Word jika susunan lari)', 'success');
+                doc.save('Sijil-Pukal-Fixed.pdf');
+                showStatus('✅ PDF (Gambar) berjaya dimuat turun!', 'success');
+            } catch (error) {
+                console.error(error);
+                showStatus('Ralat: ' + error.message, 'error');
+            }
         }
 
         // Cikgu AI: Fungsi Share ke Media Sosial (Updated to use Editable PDF)
@@ -1589,10 +1498,10 @@
                     const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
 
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({ 
+                        await navigator.share({
                             files: [file],
                             title: 'Sijil Pukal Pro',
-                            text: 'Berikut adalah fail sijil yang telah dijana.'
+                            text: 'Berikut adalah fail sijil yang telah dijana (Boleh Edit).'
                         });
                         showStatus('✅ Berjaya dikongsi!', 'success');
                     } else {
