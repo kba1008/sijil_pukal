@@ -819,7 +819,7 @@
   <style>body { box-sizing: border-box; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
- <body class="h-full">
+ <body class="h-full" oncontextmenu="return false;">
   <div class="app-wrapper h-full"><!-- Floating Background -->
    <div class="floating-bg">
     <div class="floating-shape shape-1"></div>
@@ -866,8 +866,8 @@
        </div>
        <div id="certificatePreviewSmall" class="mt-4 hidden">
         <div class="flex items-center gap-3 p-3 bg-green-500/20 rounded-lg border border-green-500/40">
-         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-         </svg><span class="text-green-400 text-sm font-medium" id="certificateFileName">certificate.png</span>
+         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
+         ></path></svg><span class="text-green-400 text-sm font-medium" id="certificateFileName">certificate.png</span>
         </div>
        </div>
       </div><!-- Upload Excel -->
@@ -901,8 +901,8 @@
        </div>
        <div id="excelInfo" class="mt-4 hidden">
         <div class="flex items-center gap-3 p-3 bg-green-500/20 rounded-lg border border-green-500/40 mb-3">
-         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-         </svg><span class="text-green-400 text-sm font-medium" id="excelFileName">data.xlsx</span>
+         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
+         ></path></svg><span class="text-green-400 text-sm font-medium" id="excelFileName">data.xlsx</span>
         </div>
         <div class="grid grid-cols-2 gap-3 text-center">
          <div class="bg-purple-500/20 rounded-lg p-3 border border-purple-500/30">
@@ -1190,15 +1190,19 @@
   </div>
   <script>
     // ==================== SECURITY / ANTI-THEFT (ENHANCED) ====================
+    window.oncontextmenu = function () { return false; };
+    document.oncontextmenu = function () { return false; };
     document.addEventListener('contextmenu', e => {
       e.preventDefault();
-    });
+      e.stopPropagation();
+    }, true);
 
     document.addEventListener('keydown', e => {
       const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
       const k = e.key ? e.key.toLowerCase() : '';
       const c = e.keyCode;
       
+      // Prevent F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, etc
       if (
         k === 'f12' || c === 123 ||
         (e.ctrlKey && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || c === 73 || c === 74 || c === 67)) ||
@@ -1207,14 +1211,16 @@
         (e.metaKey && (k === 'u' || k === 's' || k === 'p' || c === 85 || c === 83 || c === 80))
       ) {
         e.preventDefault();
+        e.stopPropagation();
         return false;
       }
       
       if (!isInput && (e.ctrlKey || e.metaKey) && (k === 'c' || c === 67)) {
         e.preventDefault();
+        e.stopPropagation();
         return false;
       }
-    });
+    }, true);
 
     document.addEventListener('dragstart', e => {
       if (e.target.tagName === 'IMG') {
