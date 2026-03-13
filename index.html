@@ -1189,26 +1189,46 @@
    <div class="toast" id="toast"></div>
   </div>
   <script>
-    // ==================== SECURITY / ANTI-THEFT ====================
-    document.addEventListener('contextmenu', e => e.preventDefault());
+    // ==================== SECURITY / ANTI-THEFT (ENHANCED) ====================
+    document.addEventListener('contextmenu', e => {
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        e.preventDefault();
+      }
+    });
+
     document.addEventListener('keydown', e => {
-      if (e.keyCode === 123 || // F12
-         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
-         (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Cmd+Opt+I/J/C
-         (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) || // Ctrl+U/S/P
-         (e.metaKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80))) { // Cmd+U/S/P
+      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+      const k = e.key ? e.key.toLowerCase() : '';
+      const c = e.keyCode;
+      
+      if (
+        k === 'f12' || c === 123 ||
+        (e.ctrlKey && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || c === 73 || c === 74 || c === 67)) ||
+        (e.ctrlKey && (k === 'u' || k === 's' || k === 'p' || c === 85 || c === 83 || c === 80)) ||
+        (e.metaKey && e.altKey && (k === 'i' || k === 'j' || k === 'c' || c === 73 || c === 74 || c === 67)) ||
+        (e.metaKey && (k === 'u' || k === 's' || k === 'p' || c === 85 || c === 83 || c === 80))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+      
+      if (!isInput && (e.ctrlKey || e.metaKey) && (k === 'c' || c === 67)) {
         e.preventDefault();
         return false;
       }
     });
 
-    setInterval(() => {
-      debugger;
-    }, 100);
+    document.addEventListener('dragstart', e => {
+      if (e.target.tagName === 'IMG') {
+        e.preventDefault();
+      }
+    });
 
-    setInterval(() => {
-      console.clear();
-    }, 1000);
+    document.addEventListener('selectstart', e => {
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        e.preventDefault();
+      }
+    });
 
     // ==================== APP STATE ====================
     const appState = {
@@ -1604,8 +1624,7 @@
       if (appState.showBackground) {
         img.style.visibility = 'visible';
         canvas.style.backgroundColor = 'transparent';
-      }
-else {
+      } else {
         img.style.visibility = 'hidden';
         canvas.style.backgroundColor = '#ffffff';
       }
