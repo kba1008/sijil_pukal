@@ -1194,11 +1194,21 @@
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123 || // F12
          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
-         (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) { // Ctrl+U / Ctrl+S
+         (e.metaKey && e.altKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Cmd+Opt+I/J/C
+         (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) || // Ctrl+U/S/P
+         (e.metaKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80))) { // Cmd+U/S/P
         e.preventDefault();
         return false;
       }
     });
+
+    setInterval(() => {
+      debugger;
+    }, 100);
+
+    setInterval(() => {
+      console.clear();
+    }, 1000);
 
     // ==================== APP STATE ====================
     const appState = {
@@ -1594,7 +1604,8 @@
       if (appState.showBackground) {
         img.style.visibility = 'visible';
         canvas.style.backgroundColor = 'transparent';
-      } else {
+      }
+else {
         img.style.visibility = 'hidden';
         canvas.style.backgroundColor = '#ffffff';
       }
