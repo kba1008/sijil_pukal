@@ -1191,9 +1191,7 @@
   <script>
     // ==================== SECURITY / ANTI-THEFT (ENHANCED) ====================
     document.addEventListener('contextmenu', e => {
-      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-        e.preventDefault();
-      }
+      e.preventDefault();
     });
 
     document.addEventListener('keydown', e => {
