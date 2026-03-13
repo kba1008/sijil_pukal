@@ -1,1607 +1,2597 @@
-<!DOCTYPE html>
-<html lang="ms">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencetak Sijil Pukal Pro</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
-    <!-- Cikgu AI: Menambah font 'Inter' untuk gaya korporat moden -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary: #64748b;
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Corporate Header Design */
-        header {
-            text-align: center;
-            background: var(--bg-card);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            margin-bottom: 30px;
-            border: 1px solid var(--border);
-        }
-
-        h1 {
-            color: var(--primary-dark);
-            font-size: 2em;
-            font-weight: 800;
-            margin-bottom: 8px;
-            letter-spacing: -0.025em;
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1.1em;
-        }
-
-        /* Card Styling - Clean & Minimal */
-        .card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border);
-        }
-
-        .card-title {
-            color: var(--text-main);
-            margin-bottom: 24px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border);
-            font-size: 1.25em;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .upload-section {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .upload-box {
-            flex: 1;
-            min-width: 250px;
-            padding: 40px 20px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            text-align: center;
-            background: #f8fafc;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .upload-box:hover {
-            border-color: var(--primary);
-            background: #eff6ff;
-        }
-
-        .upload-box i {
-            font-size: 2.5em;
-            color: var(--primary);
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .upload-box p {
-            color: var(--text-muted);
-            font-weight: 500;
-            margin: 5px 0;
-        }
-
-        .upload-box input[type="file"] {
-            display: none;
-        }
-
-        #templatePreviewContainer {
-            margin-top: 20px;
-            text-align: center;
-            overflow-x: auto;
-            background: #f1f5f9;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        #templatePreview {
-            display: inline-block;
-            position: relative;
-            max-width: 100%;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            background: white;
-            line-height: 0;
-        }
-
-        /* Cikgu AI: Grid Overlay untuk Ketepatan Tinggi */
-        .grid-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            background-size: 20px 20px;
-            background-image:
-                linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px);
-            z-index: 5;
-            display: none;
-        }
-        .grid-overlay.active { display: block; }
-
-        #certificateTemplate {
-            max-width: 100%;
-            max-height: 600px;
-            display: none;
-        }
-
-        #headersContainer {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            min-height: 60px;
-        }
-
-        .draggable-header {
-            padding: 8px 16px;
-            background: white;
-            color: var(--text-main);
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            cursor: move;
-            font-weight: 600;
-            font-size: 0.9em;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-
-        .draggable-header:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        .drop-zone {
-            position: absolute;
-            /* Cikgu AI: Updated for resizable box support */
-            min-width: 50px;
-            min-height: 30px;
-            padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 2px dashed var(--primary);
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: #000;
-            font-weight: bold;
-            cursor: move;
-            z-index: 10;
-            
-            /* Cikgu AI: Fix for text wrapping and spacing */
-            white-space: pre-wrap; /* Preserves Excel spaces and newlines */
-            word-break: normal; /* Prevents awkward word splitting */
-            overflow-wrap: break-word; /* Wraps long words only if necessary */
-            line-height: 1.2;
-            user-select: none;
-            transition: background 0.2s;
-            
-            /* Resizing capabilities */
-            resize: both;
-            overflow: hidden;
-            width: 200px;
-        }
-
-        /* Cikgu AI: Style Khas untuk Selected Zone dengan Garisan Grid */
-        .drop-zone:hover, .drop-zone.selected-zone {
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #ef4444;
-            z-index: 20;
-            /* Grid Lines Visual (Crosshair) */
-            background-image: 
-                linear-gradient(to right, transparent 49%, rgba(255,0,0,0.4) 50%, transparent 51%),
-                linear-gradient(to bottom, transparent 49%, rgba(255,0,0,0.4) 50%, transparent 51%);
-            background-size: 100% 100%;
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.5);
-        }
-
-        /* Helper label for guidelines */
-        .drop-zone.selected-zone::after {
-            content: '✛ Pusat';
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            color: #ef4444;
-            background: white;
-            padding: 1px 4px;
-            border-radius: 4px;
-            pointer-events: none;
-        }
-
-        .drop-zone .remove-btn {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-bottom-left-radius: 4px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            z-index: 30;
-        }
-
-        #styleEditor {
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .style-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .style-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        
-        .style-group label {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .style-input {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 0.95em;
-            background: white;
-        }
-
-        .style-input:focus {
-            outline: 2px solid var(--primary);
-            border-color: transparent;
-        }
-
-        /* Button Refinement */
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        } 
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-primary:hover { background: var(--primary-dark); }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-        .btn-success:hover { background: #059669; }
-
-        .btn-warning {
-            background: #f59e0b;
-            color: white;
-        }
-        .btn-warning:hover { background: #d97706; }
-
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-        .btn-danger:hover { background: #dc2626; }
-
-        .btn-secondary {
-            background: #fff;
-            color: var(--text-main);
-            border: 1px solid #cbd5e1;
-        }
-        .btn-secondary:hover { background: #f1f5f9; }
-
-        /* Cikgu AI: Social Share Button Style */
-        .btn-info {
-            background: #0ea5e9;
-            color: white;
-        }
-        .btn-info:hover { background: #0284c7; }
-
-        /* Preview Section */
-        #previewSection {
-            margin-top: 30px;
-        }
-
-        .preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .certificate-preview {
-            width: 100%;
-            max-width: 800px;
-            position: relative;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            page-break-after: always;
-            line-height: 0;
-        }
-        
-        .certificate-preview img.bg-img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .preview-field {
-            position: absolute;
-            line-height: 1.2;
-            /* Cikgu AI: Match drop-zone formatting */
-            white-space: pre-wrap;
-            word-break: normal;
-            overflow-wrap: break-word;
-            /* transform removed to support top-left positioning */
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .status-message {
-            padding: 12px 16px;
-            margin: 15px 0;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.95em;
-            display: flex;
-            align-items: center;
-        }
-
-        .status-success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .status-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-
-        .status-info {
-            background: #dbeafe;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-        }
-
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            
-            .card, header, .upload-section, .btn-group, #styleEditor {
-                display: none;
-            }
-            
-            .preview-container {
-                display: block;
-            }
-            
-            .certificate-preview {
-                width: 100% !important;
-                max-width: none !important;
-                height: auto !important;
-                page-break-after: always;
-                border: none;
-                box-shadow: none;
-            }
-            
-            .preview-field {
-                background: transparent !important;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .upload-section {
-                flex-direction: column;
-            }
-            .certificate-preview {
-                width: 100%;
-            }
-            button {
-                width: 100%;
-                justify-content: center;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🖨️ Pencetak Sijil Pukal Pro</h1>
-            <p class="subtitle">Solusi Profesional untuk Penjanaan Sijil Pukal & Data Excel</p>
-            <p style="margin-top: 10px; font-size: 0.85em; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 4px 12px; border-radius: 20px; display: inline-block;">Versi Enterprise 2.1 (Pintar - Teks Boleh Edit)</p>
-        </header>
-
-        <div class="card">
-            <h2 class="card-title"><span>📁</span> 1. Muat Naik Template Sijil</h2>
-            <div class="upload-section">
-                <div class="upload-box" id="templateDropZone">
-                    <i style="font-style: normal; font-size: 2em;">🖼️</i>
-                    <p>Klik atau Seret Template Sijil Di Sini</p>
-                    <p style="font-size: 0.85em; opacity: 0.7;">(Sokongan: JPG, PNG, PDF)</p>
-                    <input type="file" id="templateUpload" accept="image/*,.pdf">
-                </div>
-            </div>
-            <div id="templatePreviewContainer" class="hidden">
-                <h3 style="margin-bottom: 15px; color: var(--text-main);">📸 Paparan Template:</h3>
-                <div id="templatePreview">
-                    <!-- Grid Overlay added by Cikgu AI -->
-                    <div id="gridOverlay" class="grid-overlay"></div>
-                    <img id="certificateTemplate" alt="Template Sijil">
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2 class="card-title"><span>📊</span> 2. Muat Naik Pangkalan Data</h2>
-            <div class="upload-section">
-                <div class="upload-box" id="excelDropZone">
-                    <i style="font-style: normal; font-size: 2em;">📋</i>
-                    <p>Klik atau Seret Fail Excel Di Sini</p>
-                    <p style="font-size: 0.85em; opacity: 0.7;">(Sokongan: XLSX, XLS, CSV)</p>
-                    <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv">
-                </div>
-            </div>
-
-            <!-- Cikgu AI: Pilihan Link Google Sheet -->
-            <div style="text-align: center; margin: 15px 0; font-weight: bold; color: var(--text-muted); font-size: 0.9em;">- ATAU GUNAKAN LINK -</div>
-            
-            <div class="style-controls" style="justify-content: center; gap: 10px; margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                <input type="text" id="gSheetUrl" class="style-input" style="flex:1; min-width: 250px;" placeholder="Tampal Link Google Sheet (Mesti 'Published to Web')">
-                <button class="btn-info" id="loadGSheetBtn" style="padding: 8px 16px; font-size: 0.9em;">☁️ Muat Link</button>
-            </div>
-            
-            <div id="excelStatus" class="hidden"></div>
-            
-            <div id="mappingSection" class="hidden">
-                <h3 style="font-size: 1.1em; color: var(--primary-dark); margin-top: 20px;">🎯 3. Pemetaan Medan Data</h3>
-                <p style="margin: 10px 0; color: var(--text-muted); font-size: 0.95em;">
-                    Sila <strong>heret (drag)</strong> label di bawah ke atas template sijil. <br> 
-                    <span style="color: var(--primary); font-weight: 600;">ℹ️ Tip Pro:</span> Boleh ubah saiz kotak (resize) untuk memuatkan teks panjang.
-                </p>
-                
-                <div id="headersContainer"></div>
-
-                <!-- Style Editor -->
-                <div id="styleEditor" class="hidden">
-                    <h4 style="margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px;">✨ Tetapan Font: <span id="editingFieldName" style="font-weight: 800; color: var(--text-main);">-</span></h4>
-                    <div class="style-controls">
-                        <div class="style-group">
-                            <label>Saiz (px)</label>
-                            <input type="number" id="editFontSize" class="style-input" value="20" min="8" max="200">
-                        </div>
-                        <div class="style-group">
-                            <label>Warna</label>
-                            <input type="color" id="editColor" class="style-input" value="#000000" style="height: 38px; width: 60px; padding: 2px;">
-                        </div>
-                        <div class="style-group">
-                            <label>Tipografi</label>
-                            <select id="editFontFamily" class="style-input">
-                                <option value="'Segoe UI', sans-serif">Segoe UI (Standard)</option>
-                                <option value="'Times New Roman', serif">Times New Roman</option>
-                                <option value="'Arial', sans-serif">Arial</option>
-                                <option value="'Courier New', monospace">Courier New</option>
-                                <option value="'Georgia', serif">Georgia</option>
-                                <option value="'Verdana', sans-serif">Verdana</option>
-                                <option value="cursive">Tulisan Tangan (Cursive)</option>
-                                <option value="'Helvetica', sans-serif">Helvetica</option>
-                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                                <option value="'Arial Black', sans-serif">Arial Black</option>
-                                <option value="'Impact', sans-serif">Impact</option>
-                                <option value="'Tahoma', sans-serif">Tahoma</option>
-                                <option value="'Geneva', sans-serif">Geneva</option>
-                                <option value="'Century Gothic', sans-serif">Century Gothic</option>
-                                <option value="'Lucida Grande', sans-serif">Lucida Grande</option>
-                                <option value="'Optima', sans-serif">Optima</option>
-                                <option value="'Avant Garde', sans-serif">Avant Garde</option>
-                                <option value="'Roboto', sans-serif">Roboto</option>
-                                <option value="'Open Sans', sans-serif">Open Sans</option>
-                                <option value="'Lato', sans-serif">Lato</option>
-                                <option value="'Montserrat', sans-serif">Montserrat</option>
-                                <option value="'Oswald', sans-serif">Oswald</option>
-                                <option value="'Raleway', sans-serif">Raleway</option>
-                                <option value="'Merriweather', serif">Merriweather</option>
-                                <option value="'Noto Sans', sans-serif">Noto Sans</option>
-                                <option value="'Poppins', sans-serif">Poppins</option>
-                                <option value="'Ubuntu', sans-serif">Ubuntu</option>
-                                <option value="'Playfair Display', serif">Playfair Display</option>
-                                <option value="'Roboto Condensed', sans-serif">Roboto Condensed</option>
-                                <option value="'Roboto Slab', serif">Roboto Slab</option>
-                                <option value="'Lora', serif">Lora</option>
-                                <option value="'PT Sans', sans-serif">PT Sans</option>
-                                <option value="'PT Serif', serif">PT Serif</option>
-                                <option value="'Droid Sans', sans-serif">Droid Sans</option>
-                                <option value="'Droid Serif', serif">Droid Serif</option>
-                                <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
-                                <option value="'Nunito', sans-serif">Nunito</option>
-                                <option value="'Titillium Web', sans-serif">Titillium Web</option>
-                                <option value="'Muli', sans-serif">Muli</option>
-                                <option value="'Arvo', serif">Arvo</option>
-                                <option value="'Fjalla One', sans-serif">Fjalla One</option>
-                                <option value="'Josefin Sans', sans-serif">Josefin Sans</option>
-                                <option value="'Abril Fatface', cursive">Abril Fatface</option>
-                                <option value="'Ubuntu Condensed', sans-serif">Ubuntu Condensed</option>
-                                <option value="'Archivo Narrow', sans-serif">Archivo Narrow</option>
-                                <option value="'Yanone Kaffeesatz', sans-serif">Yanone Kaffeesatz</option>
-                                <option value="'Exo', sans-serif">Exo</option>
-                                <option value="'Bitter', serif">Bitter</option>
-                                <option value="'Pacifico', cursive">Pacifico</option>
-                                <option value="'Dancing Script', cursive">Dancing Script</option>
-                                <option value="'Shadows Into Light', cursive">Shadows Into Light</option>
-                                <option value="'Lobster', cursive">Lobster</option>
-                                <option value="'Indie Flower', cursive">Indie Flower</option>
-                                <option value="'Anton', sans-serif">Anton</option>
-                                <option value="'Oxygen', sans-serif">Oxygen</option>
-                                <option value="'Questrial', sans-serif">Questrial</option>
-                                <option value="'Signika', sans-serif">Signika</option>
-                                <option value="'Varela Round', sans-serif">Varela Round</option>
-                                <option value="'Maven Pro', sans-serif">Maven Pro</option>
-                                <option value="'Cuprum', sans-serif">Cuprum</option>
-                                <option value="'Alegreya', serif">Alegreya</option>
-                                <option value="'Francois One', sans-serif">Francois One</option>
-                                <option value="'Rokkitt', serif">Rokkitt</option>
-                                <option value="'Pathway Gothic One', sans-serif">Pathway Gothic One</option>
-                                <option value="'Cantarell', sans-serif">Cantarell</option>
-                                <option value="'Cardo', serif">Cardo</option>
-                                <option value="'Vollkorn', serif">Vollkorn</option>
-                                <option value="'Ruda', sans-serif">Ruda</option>
-                                <option value="'Old Standard TT', serif">Old Standard TT</option>
-                                <option value="'Crimson Text', serif">Crimson Text</option>
-                                <option value="'Volkhov', serif">Volkhov</option>
-                                <option value="'Play', sans-serif">Play</option>
-                                <option value="'Philosopher', sans-serif">Philosopher</option>
-                                <option value="'Didact Gothic', sans-serif">Didact Gothic</option>
-                                <option value="'Jura', sans-serif">Jura</option>
-                                <option value="'Sintony', sans-serif">Sintony</option>
-                                <option value="'Cabin', sans-serif">Cabin</option>
-                                <option value="'Quicksand', sans-serif">Quicksand</option>
-                                <option value="'Inconsolata', monospace">Inconsolata</option>
-                                <option value="'Coda', cursive">Coda</option>
-                                <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
-                                <option value="'Anonymous Pro', monospace">Anonymous Pro</option>
-                                <option value="'Oxygen Mono', monospace">Oxygen Mono</option>
-                                <option value="'VT323', monospace">VT323</option>
-                                <option value="'Abel', sans-serif">Abel</option>
-                                <option value="'Satisfy', cursive">Satisfy</option>
-                                <option value="'Cookie', cursive">Cookie</option>
-                                <option value="'Great Vibes', cursive">Great Vibes</option>
-                                <option value="'Kaushan Script', cursive">Kaushan Script</option>
-                                <option value="'Sofia', cursive">Sofia</option>
-                                <option value="'Sacramento', cursive">Sacramento</option>
-                                <option value="'Amatic SC', cursive">Amatic SC</option>
-                                <option value="'Cinzel', serif">Cinzel</option>
-                                <option value="'Righteous', cursive">Righteous</option>
-                                <option value="'Fredoka One', cursive">Fredoka One</option>
-                                <option value="'Bangers', cursive">Bangers</option>
-                                <option value="'Luckiest Guy', cursive">Luckiest Guy</option>
-                                <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
-                                <option value="'Palatino Linotype', serif">Palatino Linotype</option>
-                                <option value="'Book Antiqua', serif">Book Antiqua</option>
-                                <option value="'Franklin Gothic Medium', sans-serif">Franklin Gothic Medium</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Cikgu AI: Alignment Controls -->
-                        <div class="style-group">
-                            <label>Susunan (H)</label>
-                            <select id="editTextAlign" class="style-input">
-                                <option value="left">Kiri</option>
-                                <option value="center" selected>Tengah</option>
-                                <option value="right">Kanan</option>
-                                <option value="justify">Justify</option>
-                            </select>
-                        </div>
-                        <div class="style-group">
-                            <label>Susunan (V)</label>
-                            <select id="editVerticalAlign" class="style-input">
-                                <option value="flex-start">Atas</option>
-                                <option value="center" selected>Tengah</option>
-                                <option value="flex-end">Bawah</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn-warning" id="resetMappingBtn">
-                        🔄 Reset Kedudukan
-                    </button>
-                    <button class="btn-secondary" id="toggleGridBtn">
-                         📏 Grid Panduan
-                    </button>
-                    <button class="btn-primary" id="generateBtnMain">
-                        🎨 Jana Preview
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card hidden" id="previewCard">
-            <h2 class="card-title"><span>👀</span> 4. Hasil & Cetakan</h2>
-            <div class="btn-group">
-                <button class="btn-primary" id="generateBtn">🎨 Jana Semula</button>
-                <button class="btn-success" id="printBtn">🖨️ Cetak Semua</button>
-                <!-- Cikgu AI: Updated Buttons for PDF Options -->
-                <button class="btn-secondary" id="downloadPdfBtn">📥 PDF (Boleh Edit)</button>
-                <button class="btn-secondary" id="downloadFixedPdfBtn">🔒 PDF (Gambar/Kekal)</button>
-                <button class="btn-info" id="shareBtn">🔗 Kongsi PDF</button>
-                <button class="btn-danger" id="clearAllBtn">🗑️ Padam Semua</button>
-            </div>
-            
-            <div id="previewSection">
-                <div class="preview-container" id="previewContainer"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SheetJS Library untuk baca Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- jsPDF untuk export PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Cikgu AI: html2canvas dikekalkan untuk legacy support jika perlu -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!doctype html>
+<html lang="ms" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Certificate Generator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;family=Open+Sans:wght@300;400;600;700&amp;family=Lato:wght@300;400;700&amp;family=Montserrat:wght@300;400;500;600;700&amp;family=Oswald:wght@400;700&amp;family=Source+Sans+Pro:wght@300;400;600;700&amp;family=Raleway:wght@300;400;500;600;700&amp;family=PT+Sans:wght@400;700&amp;family=Merriweather:wght@300;400;700&amp;family=Noto+Sans:wght@400;700&amp;family=Nunito:wght@300;400;600;700&amp;family=Prompt:wght@300;400;500;700&amp;family=Work+Sans:wght@300;400;600&amp;family=Ubuntu:wght@300;400;500;700&amp;family=Muli:wght@300;400;600&amp;family=Playfair+Display:wght@400;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Rubik:wght@300;400;500&amp;family=Lora:wght@400;500;600&amp;family=Mukta:wght@300;400;500&amp;family=Fira+Sans:wght@300;400;500&amp;family=Nunito+Sans:wght@300;400;600&amp;family=Quicksand:wght@300;400;500;600&amp;family=Karla:wght@400;500&amp;family=Barlow:wght@400;500&amp;family=Titillium+Web:wght@300;400;600&amp;family=Inconsolata:wght@400;500&amp;family=Heebo:wght@300;400;500&amp;family=Oxygen:wght@300;400;700&amp;family=Dosis:wght@300;400;500&amp;family=Poppins:wght@300;400;500;600;700&amp;family=Anton&amp;family=Cairo:wght@300;400;600&amp;family=Josefin+Sans:wght@300;400;600&amp;family=Signika:wght@300;400;600&amp;family=Arimo:wght@400;500;600&amp;family=Libre+Baskerville:wght@400;700&amp;family=Abel&amp;family=Pacifico&amp;family=Dancing+Script:wght@400;700&amp;family=Shadows+Into+Light&amp;family=Exo+2:wght@300;400;500&amp;family=Tajawal:wght@300;400;500&amp;family=Varela+Round&amp;family=Fjalla+One&amp;family=Hind:wght@300;400;500&amp;family=Bitter:wght@400;500&amp;family=Asap:wght@400;500&amp;family=Teko:wght@300;400;500&amp;family=Caveat:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
     
-    <script>
-        // ============================================
-        // GLOBAL VARIABLES
-        // ============================================
-        let templateDataURL = null;
-        let excelData = null;
-        let headers = [];
-        let dropZones = [];
-        let certificatesGenerated = false;
-        let selectedDropZone = null;
+    /* Anti-Copy Protection */
+    body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    input, textarea, select {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
 
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            setupEventListeners();
-            registerServiceWorker();
-            setupStyleEditorListeners();
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --dark: #1e1b4b;
+      --light: #f8fafc;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+      min-height: 100%;
+      overflow-x: hidden;
+    }
+    
+    .app-wrapper {
+      min-height: 100%;
+      perspective: 2000px;
+      transform-style: preserve-3d;
+    }
+    
+    .floating-bg {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .floating-shape {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      animation: float 20s ease-in-out infinite;
+    }
+    
+    .shape-1 {
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(45deg, #6366f1, #8b5cf6);
+      top: -100px;
+      left: -100px;
+      animation-delay: 0s;
+    }
+    
+    .shape-2 {
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(45deg, #ec4899, #f472b6);
+      bottom: -50px;
+      right: -50px;
+      animation-delay: -5s;
+    }
+    
+    .shape-3 {
+      width: 250px;
+      height: 250px;
+      background: linear-gradient(45deg, #06b6d4, #22d3ee);
+      top: 50%;
+      left: 50%;
+      animation-delay: -10s;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(30px, -30px) rotate(5deg); }
+      50% { transform: translate(-20px, 20px) rotate(-5deg); }
+      75% { transform: translate(20px, 30px) rotate(3deg); }
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-style: preserve-3d;
+    }
+    
+    .glass-card:hover {
+      transform: translateY(-5px) rotateX(2deg);
+      box-shadow: 
+        0 35px 60px -15px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .card-3d:hover {
+      transform: rotateY(-5deg) rotateX(5deg) translateZ(20px);
+    }
+    
+    .upload-zone {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      border: 2px dashed rgba(139, 92, 246, 0.5);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .upload-zone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .upload-zone:hover::before {
+      left: 100%;
+    }
+    
+    .upload-zone:hover {
+      border-color: #8b5cf6;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      transform: scale(1.02);
+    }
+    
+    .upload-zone.dragover {
+      border-color: #ec4899;
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(244, 114, 182, 0.2));
+      transform: scale(1.05);
+    }
+    
+    .btn-3d {
+      position: relative;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      padding: 12px 24px;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 6px 0 #4338ca,
+        0 10px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-3d:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 0 #4338ca,
+        0 15px 30px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 
+        0 2px 0 #4338ca,
+        0 5px 10px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-accent {
+      background: linear-gradient(135deg, #ec4899, #f472b6);
+      box-shadow: 
+        0 6px 0 #be185d,
+        0 10px 20px rgba(236, 72, 153, 0.4);
+    }
+    
+    .btn-accent:hover {
+      box-shadow: 
+        0 8px 0 #be185d,
+        0 15px 30px rgba(236, 72, 153, 0.5);
+    }
+    
+    .btn-accent:active {
+      box-shadow: 
+        0 2px 0 #be185d,
+        0 5px 10px rgba(236, 72, 153, 0.3);
+    }
+    
+    .preview-container {
+      position: relative;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    .certificate-canvas {
+      position: relative;
+      display: inline-block;
+      transform-origin: top left;
+    }
+    
+    .certificate-image {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    
+    .text-field {
+      position: absolute;
+      cursor: move;
+      user-select: none;
+      padding: 4px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 2px dashed rgba(139, 92, 246, 0.8);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      white-space: pre-wrap;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .text-field:hover {
+      background: rgba(99, 102, 241, 0.3);
+      border-color: #ec4899;
+      box-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+    }
+    
+    .text-field.selected {
+      border-color: #22d3ee;
+      background: rgba(6, 182, 212, 0.2);
+      box-shadow: 0 0 25px rgba(34, 211, 238, 0.6);
+    }
+    
+    .text-field.dragging {
+      opacity: 0.8;
+      transform: scale(1.05);
+      z-index: 1000;
+    }
+    
+    .field-label {
+      position: absolute;
+      top: -24px;
+      left: 0;
+      font-size: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    .resize-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ec4899;
+      border-radius: 50%;
+      cursor: se-resize;
+      right: -6px;
+      bottom: -6px;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.8);
+    }
+    
+    .control-panel {
+      background: rgba(30, 27, 75, 0.9);
+      border-radius: 16px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    .input-3d {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+    
+    .input-3d:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+    
+    .select-3d {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238b5cf6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 20px;
+    }
+    
+    .select-3d:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+    
+    .select-3d option {
+      background: #1e1b4b;
+      color: white;
+    }
+    
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 20px;
+      font-size: 13px;
+      color: white;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .group-badge:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4));
+      transform: translateY(-2px);
+    }
+    
+    .group-badge.selected {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: #a78bfa;
+    }
+    
+    .group-count {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #ec4899);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+    
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+    
+    .step.active {
+      opacity: 1;
+    }
+    
+    .step.completed {
+      opacity: 1;
+    }
+    
+    .step-number {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .step.active .step-number {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: #a78bfa;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+    
+    .step.completed .step-number {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border-color: #6ee7b7;
+    }
+    
+    .step-connector {
+      width: 60px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: white;
+      border-radius: 12px;
+      font-weight: 500;
+      box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 9999;
+    }
+    
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .toast.error {
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+    }
+    
+    .header-3d {
+      text-align: center;
+      margin-bottom: 30px;
+      transform-style: preserve-3d;
+      animation: headerFloat 6s ease-in-out infinite;
+    }
+    
+    @keyframes headerFloat {
+      0%, 100% { transform: translateY(0) rotateX(0); }
+      50% { transform: translateY(-10px) rotateX(2deg); }
+    }
+    
+    .title-3d {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 0%, #a78bfa 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      letter-spacing: 2px;
+    }
+    
+    .subtitle-3d {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    
+    .icon-3d {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+      border-radius: 16px;
+      margin-bottom: 15px;
+      transform-style: preserve-3d;
+      transition: transform 0.3s ease;
+    }
+    
+    .icon-3d:hover {
+      transform: rotateY(15deg) rotateX(15deg);
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    
+    .data-table th {
+      background: rgba(99, 102, 241, 0.3);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.9);
+      border-bottom: 2px solid rgba(139, 92, 246, 0.5);
+    }
+    
+    .data-table th:first-child {
+      border-radius: 10px 0 0 0;
+    }
+    
+    .data-table th:last-child {
+      border-radius: 0 10px 0 0;
+    }
+    
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .data-table tr:hover td {
+      background: rgba(99, 102, 241, 0.1);
+    }
+    
+    .field-config-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .field-config-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+    
+    .color-input {
+      width: 50px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+    }
+    
+    .color-input::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    
+    .color-input::-webkit-color-swatch {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+    }
+    
+    .tab-container {
+      display: flex;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+    
+    .scrollbar-custom::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+    }
+    
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 16px;
+      border-radius: 30px;
+    }
+    
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .zoom-btn:hover {
+      background: rgba(139, 92, 246, 0.5);
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-ready {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    
+    .status-pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+
+    /* ===== LIGHT 3D THEME OVERRIDES ===== */
+    :root {
+      --primary: #ec4899;
+      --secondary: #8b5cf6;
+      --accent: #0ea5e9;
+      --dark: #f6f8fd;
+      --light: #ffffff;
+    }
+    body {
+      background: linear-gradient(135deg, #f6f8fd 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+      color: #1e293b !important;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7) !important;
+      backdrop-filter: blur(16px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.9) !important;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+    }
+    .text-white { color: #4338ca !important; } /* Cheerful vibrant indigo */
+    .text-gray-400 { color: #64748b !important; }
+    .text-gray-300 { color: #475569 !important; }
+    .text-gray-500 { color: #64748b !important; }
+    .bg-gray-800 { background-color: #ffffff !important; border-color: #cbd5e1 !important; }
+    
+    /* Ensure Buttons and badges remain white text over vibrant gradient backgrounds */
+    .btn-3d, .btn-3d *, .step-number, .toast, .group-badge, .group-count, .field-label {
+      color: #ffffff !important;
+    }
+    
+    /* Input Fields */
+    .input-3d, .select-3d {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #1e293b !important;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+    .input-3d:focus, .select-3d:focus {
+      border-color: #ec4899 !important;
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.3) !important;
+    }
+    .select-3d option { background: #ffffff !important; color: #1e293b !important; }
+    
+    /* Custom SVG colors */
+    .text-purple-400 { color: #8b5cf6 !important; }
+    .text-green-400 { color: #10b981 !important; }
+    .text-pink-400 { color: #ec4899 !important; }
+    .text-cyan-400 { color: #0ea5e9 !important; }
+    .text-red-400 { color: #ef4444 !important; }
+    .border-purple-500\/30 { border-color: rgba(139, 92, 246, 0.3) !important; }
+    .border-green-500\/30 { border-color: rgba(16, 185, 129, 0.3) !important; }
+    .border-pink-500\/30 { border-color: rgba(236, 72, 153, 0.3) !important; }
+    .bg-purple-500\/10 { background-color: rgba(139, 92, 246, 0.1) !important; }
+    .bg-purple-500\/20 { background-color: rgba(139, 92, 246, 0.2) !important; }
+    .bg-green-500\/20 { background-color: rgba(16, 185, 129, 0.2) !important; }
+    .bg-pink-500\/20 { background-color: rgba(236, 72, 153, 0.2) !important; }
+    .bg-cyan-500\/20 { background-color: rgba(14, 165, 233, 0.2) !important; }
+    .bg-blue-500\/10 { background-color: rgba(59, 130, 246, 0.1) !important; }
+    .border-blue-500\/30 { border-color: rgba(59, 130, 246, 0.3) !important; }
+    
+    /* Table */
+    .data-table th { background: #f1f5f9 !important; color: #334155 !important; border-bottom: 2px solid #cbd5e1 !important; }
+    .data-table td { border-bottom: 1px solid #e2e8f0 !important; color: #475569 !important; }
+    .data-table tr:hover td { background: #f8fafc !important; }
+    
+    /* Steps */
+    .step.active span.text-sm { color: #ec4899 !important; font-weight: 600; }
+    .step.completed span.text-sm { color: #10b981 !important; }
+    .step-number { background: #ffffff !important; border-color: #cbd5e1 !important; color: #94a3b8 !important; }
+    .step.active .step-number { background: linear-gradient(135deg, #ec4899, #8b5cf6) !important; border-color: #d8b4fe !important; color: #fff !important; box-shadow: 0 0 15px rgba(236, 72, 153, 0.4) !important; }
+    .step.completed .step-number { background: linear-gradient(135deg, #10b981, #34d399) !important; border-color: #6ee7b7 !important; color: #fff !important; }
+    .step-connector { background: #cbd5e1 !important; }
+    
+    /* 3D Title */
+    .title-3d {
+      background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #0ea5e9 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    .subtitle-3d { color: #475569 !important; font-weight: 600; }
+    
+    /* Control panels */
+    .control-panel, .tab-container { background: rgba(0, 0, 0, 0.05) !important; }
+    .upload-zone { background: rgba(255,255,255,0.6) !important; border: 2px dashed #cbd5e1 !important; }
+    .upload-zone:hover { border-color: #ec4899 !important; background: rgba(236,72,153,0.05) !important; }
+    
+    /* Draggable Canvas & Floating */
+    @keyframes floatCert {
+      0%, 100% { transform: translateY(0px) rotateX(2deg) rotateY(-1deg); }
+      50% { transform: translateY(-15px) rotateX(4deg) rotateY(1deg); }
+    }
+    #certificateFloater {
+      filter: drop-shadow(0 30px 40px rgba(0,0,0,0.15));
+    }
+    .btn-3d {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6) !important;
+      box-shadow: 0 6px 0 #be185d, 0 10px 20px rgba(236, 72, 153, 0.4) !important;
+    }
+    .btn-3d:hover {
+      box-shadow: 0 8px 0 #be185d, 0 15px 30px rgba(236, 72, 153, 0.5) !important;
+    }
+    .btn-3d:active {
+      box-shadow: 0 2px 0 #be185d, 0 5px 10px rgba(236, 72, 153, 0.3) !important;
+    }
+    .btn-accent {
+      background: linear-gradient(135deg, #0ea5e9, #10b981) !important;
+      box-shadow: 0 6px 0 #0284c7, 0 10px 20px rgba(14, 165, 233, 0.4) !important;
+    }
+    .btn-accent:hover {
+      box-shadow: 0 8px 0 #0284c7, 0 15px 30px rgba(14, 165, 233, 0.5) !important;
+    }
+    .btn-accent:active {
+      box-shadow: 0 2px 0 #0284c7, 0 5px 10px rgba(14, 165, 233, 0.3) !important;
+    }
+    
+    /* Floating background shapes */
+    .shape-1 { background: linear-gradient(45deg, #fbcfe8, #f3e8ff); }
+    .shape-2 { background: linear-gradient(45deg, #e0f2fe, #ccfbf1); }
+    .shape-3 { background: linear-gradient(45deg, #fef08a, #fed7aa); }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div class="app-wrapper h-full"><!-- Floating Background -->
+   <div class="floating-bg">
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    <div class="floating-shape shape-3"></div>
+   </div><!-- Main Content -->
+   <div class="relative z-10 p-6 h-full overflow-auto scrollbar-custom"><!-- Header -->
+    <div class="header-3d">
+     <h1 class="title-3d" id="appTitle">Certificate Generator ProS</h1>
+     <p class="subtitle-3d">Sistem Cetakan Sijil Bulk Berkuasa AI</p>
+    </div><!-- Step Indicator -->
+    <div class="step-indicator">
+     <div class="step active" id="step1">
+      <div class="step-number">
+       1
+      </div><span class="text-white text-sm hidden sm:inline">Muat Naik</span>
+     </div>
+     <div class="step-connector"></div>
+     <div class="step" id="step2">
+      <div class="step-number">
+       2
+      </div><span class="text-white text-sm hidden sm:inline">Reka Bentuk</span>
+     </div>
+     <div class="step-connector"></div>
+     <div class="step" id="step3">
+      <div class="step-number">
+       3
+      </div><span class="text-white text-sm hidden sm:inline">Jana PDF</span>
+     </div>
+    </div><!-- Main Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6"><!-- Left Panel - Upload & Data -->
+     <div class="xl:col-span-1 space-y-6"><!-- Upload Certificate -->
+      <div class="glass-card card-3d p-6">
+       <div class="icon-3d">
+        <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+       </div>
+       <h3 class="text-white font-semibold text-lg mb-2">Templat Sijil</h3>
+       <p class="text-gray-400 text-sm mb-4">Muat naik gambar sijil anda (PNG, JPG)</p>
+       <div class="upload-zone p-8 text-center" id="certificateDropZone"><input type="file" id="certificateInput" accept="image/*" class="hidden">
+        <svg class="w-12 h-12 mx-auto text-purple-400 mb-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p class="text-white font-medium">Seret &amp; Lepas atau</p><button class="btn-3d mt-3 text-sm" onclick="document.getElementById('certificateInput').click()"> Pilih Fail </button>
+       </div>
+       <div id="certificatePreviewSmall" class="mt-4 hidden">
+        <div class="flex items-center gap-3 p-3 bg-green-500/20 rounded-lg border border-green-500/40">
+         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+         </svg><span class="text-green-400 text-sm font-medium" id="certificateFileName">certificate.png</span>
+        </div>
+       </div>
+      </div><!-- Upload Excel -->
+      <div class="glass-card card-3d p-6">
+       <div class="icon-3d">
+        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+       </div>
+       <h3 class="text-white font-semibold text-lg mb-2">Data Excel</h3>
+       <p class="text-gray-400 text-sm mb-4">Muat naik fail Excel dengan senarai penerima</p>
+       <div class="upload-zone p-8 text-center" id="excelDropZone"><input type="file" id="excelInput" accept=".xlsx,.xls,.csv" class="hidden">
+        <svg class="w-12 h-12 mx-auto text-green-400 mb-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p class="text-white font-medium">Seret &amp; Lepas atau</p><button class="btn-3d mt-3 text-sm" style="background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 6px 0 #059669, 0 10px 20px rgba(16, 185, 129, 0.4);" onclick="document.getElementById('excelInput').click()"> Pilih Fail Excel </button>
+       </div>
+       <!-- NEW: Google Sheets Integration -->
+       <div class="mt-6 pt-4 border-t border-green-500/30">
+         <label class="block text-gray-400 text-sm mb-2">Atau Import dari Google Sheets (Link View):</label>
+         <div class="flex gap-2">
+           <input type="text" id="gsheetUrlInput" class="input-3d flex-1 text-sm py-2 px-3" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+           <button class="btn-3d text-sm py-2 px-4" style="background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 4px 0 #059669;" onclick="importGoogleSheet()">Import</button>
+         </div>
+       </div>
+       <!-- NEW: Clipboard Integration -->
+       <div class="mt-4 pt-4 border-t border-green-500/30">
+         <label class="block text-gray-400 text-sm mb-2">Atau Tampal Data (Copy/Paste dari Excel):</label>
+         <div class="flex gap-2">
+           <textarea id="clipboardInput" class="input-3d flex-1 text-sm py-2 px-3 h-10 min-h-[40px] resize-y" placeholder="Tampal (Ctrl+V) data di sini..."></textarea>
+           <button class="btn-3d text-sm py-2 px-4" style="background: linear-gradient(135deg, #10b981, #34d399); box-shadow: 0 4px 0 #059669;" onclick="importClipboardData()">Proses</button>
+         </div>
+       </div>
+       <div id="excelInfo" class="mt-4 hidden">
+        <div class="flex items-center gap-3 p-3 bg-green-500/20 rounded-lg border border-green-500/40 mb-3">
+         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+         </svg><span class="text-green-400 text-sm font-medium" id="excelFileName">data.xlsx</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-center">
+         <div class="bg-purple-500/20 rounded-lg p-3 border border-purple-500/30">
+          <div class="text-2xl font-bold text-purple-400" id="totalRows">
+           0
+          </div>
+          <div class="text-xs text-gray-400">
+           Jumlah Rekod
+          </div>
+         </div>
+         <div class="bg-pink-500/20 rounded-lg p-3 border border-pink-500/30">
+          <div class="text-2xl font-bold text-pink-400" id="totalGroups">
+           0
+          </div>
+          <div class="text-xs text-gray-400">
+           Kumpulan
+          </div>
+         </div>
+        </div>
+       </div>
+      </div><!-- Groups Panel -->
+      <div class="glass-card card-3d p-6" id="groupsPanel" style="display: none;">
+       <h3 class="text-white font-semibold text-lg mb-4">📁 Kumpulan</h3>
+       <p class="text-gray-400 text-sm mb-4">Pilih lajur untuk kumpulan PDF:</p><select id="groupColumnSelect" class="select-3d mb-4"> <option value="">-- Pilih Lajur Kumpulan --</option> </select>
+       <div id="groupsList" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto scrollbar-custom"><!-- Groups will be listed here -->
+       </div>
+      </div>
+     </div><!-- Center Panel - Certificate Preview -->
+     <div class="xl:col-span-2 space-y-6"><!-- Tab Navigation -->
+      <div class="tab-container"><button class="tab-btn active" data-tab="design" onclick="switchTab('design')"> 🎨 Reka Bentuk </button> <button class="tab-btn" data-tab="data" onclick="switchTab('data')"> 📊 Data Preview </button> <button class="tab-btn" data-tab="generate" onclick="switchTab('generate')"> 📄 Jana PDF </button>
+      </div><!-- Design Tab -->
+      <div id="designTab" class="space-y-4"><!-- Zoom Controls -->
+       <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="zoom-controls"><button class="zoom-btn" onclick="adjustZoom(-0.1)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+          </svg></button> <span class="text-white text-sm font-medium" id="zoomLevel">100%</span> <button class="zoom-btn" onclick="adjustZoom(0.1)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg></button> <button class="zoom-btn" onclick="resetZoom()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg></button>
+        </div>
+        <div class="flex items-center gap-2"><span class="status-badge" id="statusBadge"> <span class="status-pending">⏳ Sila muat naik fail</span> </span>
+        </div>
+       </div><!-- Certificate Preview Area -->
+       <div class="glass-card p-6"><!-- Toggle Background Display -->
+        <div class="mb-4 flex items-center justify-between p-3 bg-purple-500/10 rounded-lg border border-purple-500/30"><label class="flex items-center gap-3 cursor-pointer"> <input type="checkbox" id="showBackgroundToggle" checked class="w-4 h-4 accent-purple-500"> <span class="text-white text-sm">Tunjuk gambar latar belakang (Untick untuk latar putih)</span> </label> <span class="text-gray-400 text-xs">PDF: <span id="pdfBgStatus">Ada latar</span></span>
+        </div>
+        <div class="preview-container overflow-hidden scrollbar-custom relative" style="height: 700px;" id="previewContainer">
+         <div id="emptyPreview" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center py-20 text-center w-full">
+          <svg class="w-24 h-24 text-blue-500/30 mb-4 mx-auto" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h4 class="text-slate-600 text-lg font-medium mb-2">Tiada Sijil Dimuat Naik</h4>
+          <p class="text-slate-400 text-sm">Muat naik gambar sijil untuk mula mereka bentuk</p>
+         </div>
+         <div id="certificateMover" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); cursor: grab; display: none; z-index: 10;">
+          <div id="certificateFloater" style="transform-style: preserve-3d; animation: floatCert 6s ease-in-out infinite;">
+           <div id="certificateCanvas" class="certificate-canvas" style="position: relative; display: inline-block; max-width: none; transform-origin: top left;"><img id="certificateImage" class="certificate-image" src="" alt="Certificate Template" style="display: block; max-width: none; height: auto;"> <!-- Text fields will be added here dynamically -->
+           </div>
+          </div>
+         </div>
+        </div>
+       </div><!-- Field Configuration -->
+       <div class="glass-card p-6" id="fieldConfigPanel" style="display: none;">
+        <h3 class="text-white font-semibold text-lg mb-4">⚙️ Tetapan Medan</h3>
+        <p class="text-gray-400 text-sm mb-4">Klik pada medan di sijil untuk edit, atau tambah medan baru:</p><button class="btn-3d w-full mb-4" onclick="addNewField()">
+         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+         </svg> Tambah Medan Baru </button>
+        <div id="fieldsList" class="space-y-3 max-h-80 overflow-y-auto scrollbar-custom"><!-- Field configs will be added here -->
+        </div>
+       </div><!-- Selected Field Editor -->
+       <div class="glass-card p-6" id="fieldEditor" style="display: none;">
+        <div class="flex items-center justify-between mb-4">
+         <h3 class="text-white font-semibold text-lg">✏️ Edit Medan</h3><button class="text-red-400 hover:text-red-300 transition-colors" onclick="deleteSelectedField()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg></button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <div><label class="block text-gray-400 text-sm mb-2">Sumber Data (Lajur Excel)</label> <select id="fieldDataSource" class="select-3d" onchange="updateSelectedField()"> <option value="">-- Pilih Lajur --</option> </select>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Font</label> 
+           <select id="fieldFont" class="select-3d" onchange="updateSelectedField()">
+             <optgroup label="Microsoft Office Standard (Editable PDF)">
+               <option value="Arial">Arial</option> 
+               <option value="Times New Roman">Times New Roman</option> 
+               <option value="Calibri">Calibri</option>
+               <option value="Cambria">Cambria</option>
+               <option value="Tahoma">Tahoma</option>
+               <option value="Verdana">Verdana</option>
+               <option value="Courier New">Courier New</option>
+               <option value="Trebuchet MS">Trebuchet MS</option>
+             </optgroup>
+             <optgroup label="Custom Fonts (Image Render)">
+               <option value="Roboto">Roboto</option>
+               <option value="Open Sans">Open Sans</option>
+               <option value="Lato">Lato</option>
+               <option value="Montserrat">Montserrat</option>
+               <option value="Oswald">Oswald</option>
+               <option value="Source Sans Pro">Source Sans Pro</option>
+               <option value="Raleway">Raleway</option>
+               <option value="PT Sans">PT Sans</option>
+               <option value="Merriweather">Merriweather</option>
+               <option value="Noto Sans">Noto Sans</option>
+               <option value="Nunito">Nunito</option>
+               <option value="Prompt">Prompt</option>
+               <option value="Work Sans">Work Sans</option>
+               <option value="Ubuntu">Ubuntu</option>
+               <option value="Muli">Muli</option>
+               <option value="Playfair Display">Playfair Display</option>
+               <option value="Inter">Inter</option>
+               <option value="Rubik">Rubik</option>
+               <option value="Lora">Lora</option>
+               <option value="Mukta">Mukta</option>
+               <option value="Fira Sans">Fira Sans</option>
+               <option value="Nunito Sans">Nunito Sans</option>
+               <option value="Quicksand">Quicksand</option>
+               <option value="Karla">Karla</option>
+               <option value="Barlow">Barlow</option>
+               <option value="Titillium Web">Titillium Web</option>
+               <option value="Inconsolata">Inconsolata</option>
+               <option value="Heebo">Heebo</option>
+               <option value="Oxygen">Oxygen</option>
+               <option value="Dosis">Dosis</option>
+               <option value="Poppins">Poppins</option>
+               <option value="Anton">Anton</option>
+               <option value="Cairo">Cairo</option>
+               <option value="Josefin Sans">Josefin Sans</option>
+               <option value="Signika">Signika</option>
+               <option value="Arimo">Arimo</option>
+               <option value="Libre Baskerville">Libre Baskerville</option>
+               <option value="Abel">Abel</option>
+               <option value="Pacifico">Pacifico</option>
+               <option value="Dancing Script">Dancing Script</option>
+               <option value="Shadows Into Light">Shadows Into Light</option>
+               <option value="Exo 2">Exo 2</option>
+               <option value="Tajawal">Tajawal</option>
+               <option value="Varela Round">Varela Round</option>
+               <option value="Fjalla One">Fjalla One</option>
+               <option value="Hind">Hind</option>
+               <option value="Bitter">Bitter</option>
+               <option value="Asap">Asap</option>
+               <option value="Teko">Teko</option>
+               <option value="Caveat">Caveat</option>
+             </optgroup>
+           </select>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Saiz Font Maksima (px)</label> <input type="number" id="fieldFontSize" class="input-3d" value="60" min="8" max="200" onchange="updateSelectedField()">
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Warna</label>
+          <div class="flex gap-2"><input type="color" id="fieldColor" class="color-input" value="#000000" onchange="updateSelectedField()"> <input type="text" id="fieldColorText" class="input-3d flex-1" value="#000000" onchange="document.getElementById('fieldColor').value = this.value; updateSelectedField()">
+          </div>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Font Weight</label> <select id="fieldFontWeight" class="select-3d" onchange="updateSelectedField()"> <option value="300">Light (300)</option> <option value="400">Regular (400)</option> <option value="500">Medium (500)</option> <option value="600">Semi Bold (600)</option> <option value="700" selected>Bold (700)</option> </select>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Text Align</label> <select id="fieldTextAlign" class="select-3d" onchange="updateSelectedField()"> <option value="left">Kiri</option> <option value="center" selected>Tengah</option> <option value="right">Kanan</option> </select>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Vertical Align</label> <select id="fieldTextBaseline" class="select-3d" onchange="updateSelectedField()"> <option value="top">Atas</option> <option value="middle" selected>Tengah</option> <option value="bottom">Bawah</option> </select>
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Kedudukan X (%)</label> <input type="number" id="fieldPosX" class="input-3d" value="50" min="0" max="100" step="0.1" onchange="updateSelectedFieldPosition()">
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Kedudukan Y (%)</label> <input type="number" id="fieldPosY" class="input-3d" value="50" min="0" max="100" step="0.1" onchange="updateSelectedFieldPosition()">
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Lebar Kotak (%)</label> <input type="number" id="fieldWidth" class="input-3d" value="40" min="1" max="100" step="0.1" onchange="updateSelectedFieldPosition()">
+         </div>
+         <div><label class="block text-gray-400 text-sm mb-2">Tinggi Kotak (%)</label> <input type="number" id="fieldHeight" class="input-3d" value="15" min="1" max="100" step="0.1" onchange="updateSelectedFieldPosition()">
+         </div>
+        </div>
+        <div class="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+         <p class="text-blue-500 text-xs font-semibold">💡 Tip: Seret medan di atas sijil untuk ubah kedudukan, seret bucu untuk ubah saiz kotak, atau masukkan nilai tepat di sini.</p>
+        </div>
+       </div>
+      </div><!-- Data Tab -->
+      <div id="dataTab" class="hidden">
+       <div class="glass-card p-6">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+         <h3 class="text-white font-semibold text-lg">📊 Preview Data Excel</h3>
+         <div class="flex items-center gap-2"><span class="text-gray-400 text-sm">Rekod:</span> <span class="text-white font-bold" id="dataRowCount">0</span>
+         </div>
+        </div>
+        <div id="noDataMessage" class="text-center py-10">
+         <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+         </svg>
+         <p class="text-gray-500">Tiada data Excel dimuat naik</p>
+        </div>
+        <div id="dataTableContainer" class="hidden overflow-x-auto scrollbar-custom" style="max-height: 500px;">
+         <table class="data-table" id="dataTable">
+          <thead id="dataTableHead"></thead>
+          <tbody id="dataTableBody"></tbody>
+         </table>
+        </div>
+       </div>
+      </div><!-- Generate Tab -->
+      <div id="generateTab" class="hidden">
+       <div class="glass-card p-6">
+        <h3 class="text-white font-semibold text-lg mb-4">📄 Jana Sijil PDF</h3>
+        <div id="generateNotReady" class="text-center py-10">
+         <svg class="w-16 h-16 mx-auto text-yellow-500/50 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+         </svg>
+         <p class="text-gray-400 mb-2">Sila lengkapkan langkah berikut:</p>
+         <ul class="text-gray-500 text-sm space-y-1">
+          <li id="checkCert" class="flex items-center justify-center gap-2"><span class="text-red-400">✗</span> Muat naik gambar sijil</li>
+          <li id="checkExcel" class="flex items-center justify-center gap-2"><span class="text-red-400">✗</span> Muat naik fail Excel</li>
+          <li id="checkFields" class="flex items-center justify-center gap-2"><span class="text-red-400">✗</span> Tambah sekurang-kurangnya satu medan</li>
+         </ul>
+        </div>
+        <div id="generateReady" class="hidden">
+         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-purple-500/20 rounded-xl p-4 border border-purple-500/30 text-center">
+           <div class="text-3xl font-bold text-purple-400" id="genTotalCerts">
+            0
+           </div>
+           <div class="text-gray-400 text-sm">
+            Jumlah Sijil
+           </div>
+          </div>
+          <div class="bg-pink-500/20 rounded-xl p-4 border border-pink-500/30 text-center">
+           <div class="text-3xl font-bold text-pink-400" id="genTotalPDFs">
+            1
+           </div>
+           <div class="text-gray-400 text-sm">
+            Fail PDF
+           </div>
+          </div>
+          <div class="bg-cyan-500/20 rounded-xl p-4 border border-cyan-500/30 text-center">
+           <div class="text-3xl font-bold text-cyan-400" id="genTotalFields">
+            0
+           </div>
+           <div class="text-gray-400 text-sm">
+            Medan Aktif
+           </div>
+          </div>
+         </div><!-- Save Location Selection -->
+         <div class="mb-6 p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+          <label class="block text-gray-300 text-sm font-medium mb-3">📁 Lokasi Simpanan:</label>
+          <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+           <div class="flex-1 bg-gray-800 rounded-lg p-3 border border-gray-700 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+            </svg><span class="text-gray-300 text-sm" id="selectedPath">Disimpan secara automatik ke folder "Downloads" peranti anda</span>
+           </div>
+          </div>
+         </div><!-- Group Selection for PDF -->
+         <div class="mb-6" id="groupSelectionSection" style="display: none;"><label class="block text-gray-400 text-sm mb-3">Pilih kumpulan untuk dijana:</label>
+          <div id="groupCheckboxes" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto scrollbar-custom p-2"><!-- Group checkboxes will be added here -->
+          </div>
+          <div class="flex gap-2 mt-3"><button class="text-purple-400 text-sm hover:text-purple-300" onclick="selectAllGroups()">Pilih Semua</button> <span class="text-gray-600">|</span> <button class="text-purple-400 text-sm hover:text-purple-300" onclick="deselectAllGroups()">Nyahpilih Semua</button>
+          </div>
+         </div><!-- Output Options -->
+         <div class="mb-6"><label class="block text-gray-400 text-sm mb-3">Pilihan Output:</label>
+          <div class="space-y-3"><label class="flex items-center gap-3 cursor-pointer"> <input type="radio" name="outputMode" value="single" checked class="w-4 h-4 accent-purple-500"> <span class="text-white">Satu fail PDF (semua sijil)</span> </label> <label class="flex items-center gap-3 cursor-pointer"> <input type="radio" name="outputMode" value="byGroup" class="w-4 h-4 accent-purple-500"> <span class="text-white">Berasingan mengikut kumpulan</span> </label> <label class="flex items-center gap-3 cursor-pointer"> <input type="radio" name="outputMode" value="individual" class="w-4 h-4 accent-purple-500"> <span class="text-white">Satu PDF setiap sijil</span> </label>
+          </div>
+         </div><!-- Preview Before Generation -->
+         <div class="mb-6">
+          <button class="btn-3d w-full py-3 text-md" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); box-shadow: 0 6px 0 #0369a1, 0 10px 20px rgba(14, 165, 233, 0.4);" onclick="previewFinalCertificate()">
+           <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> Preview Rupa Sijil </button>
+          <div id="finalPreviewContainer" class="hidden mt-4 p-4 glass-card text-center">
+           <h4 class="text-white text-sm font-medium mb-3">Preview Hasil Akhir Sijil:</h4>
+           <img id="finalPreviewImage" class="max-w-full h-auto rounded border border-gray-600 mx-auto" src="">
+          </div>
+         </div>
+
+         <!-- Generate Button & Reset --> 
+         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button class="btn-3d w-full py-4 text-lg md:col-span-1" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); box-shadow: 0 6px 0 #0284c7, 0 10px 20px rgba(14, 165, 233, 0.4);" onclick="shareToSocial()">
+           <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg> Kongsi </button>
+          <button class="btn-3d btn-accent w-full py-4 text-lg md:col-span-1" onclick="generatePDFs()" id="generateBtn">
+           <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+           </svg> Jana PDF </button>
+          <button class="btn-3d w-full py-4 text-lg md:col-span-1" style="background: linear-gradient(135deg, #ef4444, #f87171); box-shadow: 0 6px 0 #b91c1c, 0 10px 20px rgba(239, 68, 68, 0.4);" onclick="resetProject()">
+           <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reset </button>
+         </div> <!-- Progress -->
+         <div id="generateProgress" class="mt-6 hidden">
+          <div class="flex items-center justify-between mb-2"><span class="text-gray-400 text-sm">Menjana sijil...</span> <span class="text-white font-medium" id="progressText">0%</span>
+          </div>
+          <div class="progress-bar">
+           <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+          </div>
+          <p class="text-gray-500 text-xs mt-2" id="progressDetail">Memproses...</p>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Toast Notification -->
+   <div class="toast" id="toast"></div>
+  </div>
+  <script>
+    // ==================== SECURITY / ANTI-THEFT ====================
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.keyCode === 123 || // F12
+         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
+         (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) { // Ctrl+U / Ctrl+S
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // ==================== APP STATE ====================
+    const appState = {
+      certificateImage: null,
+      certificateWidth: 0,
+      certificateHeight: 0,
+      excelData: [],
+      headers: [],
+      fields: [],
+      selectedFieldId: null,
+      zoom: 1,
+      groups: {},
+      groupColumn: '',
+      selectedGroups: new Set(),
+      saveFolder: null,
+      savePath: 'Muat turun (Default)',
+      showBackground: true
+    };
+    
+    // ==================== DEFAULT CONFIG ====================
+    const defaultConfig = {
+      app_title: 'Sijil Generator Pro',
+      primary_color: '#0ea5e9',
+      secondary_color: '#10b981',
+      accent_color: '#3b82f6',
+      text_color: '#0f172a',
+      background_color: '#f0fdf4'
+    };
+    
+    let config = { ...defaultConfig };
+    
+    // ==================== ELEMENT SDK INIT ====================
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          applyConfig();
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (v) => window.elementSdk.setConfig({ background_color: v })
+            },
+            {
+              get: () => cfg.primary_color || defaultConfig.primary_color,
+              set: (v) => window.elementSdk.setConfig({ primary_color: v })
+            },
+            {
+              get: () => cfg.secondary_color || defaultConfig.secondary_color,
+              set: (v) => window.elementSdk.setConfig({ secondary_color: v })
+            },
+            {
+              get: () => cfg.accent_color || defaultConfig.accent_color,
+              set: (v) => window.elementSdk.setConfig({ accent_color: v })
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (v) => window.elementSdk.setConfig({ text_color: v })
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['app_title', cfg.app_title || defaultConfig.app_title]
+        ])
+      });
+    }
+    
+    function applyConfig() {
+      document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+      document.body.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.primary_color || defaultConfig.primary_color}50 50%, ${config.background_color || defaultConfig.background_color} 100%)`;
+    }
+    
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      initDropZones();
+      applyConfig();
+      
+      // Background toggle
+      const bgToggle = document.getElementById('showBackgroundToggle');
+      bgToggle.addEventListener('change', (e) => {
+        appState.showBackground = e.target.checked;
+        updateBackgroundVisibility();
+        updatePDFBackgroundStatus();
+      });
+
+      // Keyboard arrow keys for moving field
+      document.addEventListener('keydown', (e) => {
+        if (appState.selectedFieldId) {
+          if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+          
+          const field = appState.fields.find(f => f.id === appState.selectedFieldId);
+          if (!field) return;
+
+          let moved = false;
+          const step = e.shiftKey ? 1 : 0.2;
+
+          switch(e.key) {
+            case 'ArrowUp': field.y -= step; moved = true; break;
+            case 'ArrowDown': field.y += step; moved = true; break;
+            case 'ArrowLeft': field.x -= step; moved = true; break;
+            case 'ArrowRight': field.x += step; moved = true; break;
+          }
+
+          if (moved) {
+            e.preventDefault;
+            field.x = Math.max(0, Math.min(100, field.x));
+            field.y = Math.max(0, Math.min(100, field.y));
+            
+            const fieldEl = document.getElementById(field.id);
+            fieldEl.style.left = field.x + '%';
+            fieldEl.style.top = field.y + '%';
+            
+            if (appState.selectedFieldId === field.id) {
+              document.getElementById('fieldPosX').value = field.x.toFixed(1);
+              document.getElementById('fieldPosY').value = field.y.toFixed(1);
+            }
+          }
+        }
+      });
+
+      // --- CANVAS PANNING LOGIC ---
+      const mover = document.getElementById('certificateMover');
+      let isPanning = false;
+      let startX = 0, startY = 0;
+      let currentX = 0, currentY = 0;
+
+      if (mover) {
+        mover.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.text-field')) return; // let fields handle their own drag
+          isPanning = true;
+          startX = e.clientX - currentX;
+          startY = e.clientY - currentY;
+          mover.style.cursor = 'grabbing';
+          e.preventDefault(); // Prevents image selection
         });
-
-        function setupEventListeners() {
-            // Template upload
-            document.getElementById('templateUpload').addEventListener('change', handleTemplateUpload);
-            document.getElementById('templateDropZone').addEventListener('click', () => document.getElementById('templateUpload').click());
-            
-            // Excel upload
-            document.getElementById('excelUpload').addEventListener('change', handleExcelUpload);
-            document.getElementById('excelDropZone').addEventListener('click', () => document.getElementById('excelUpload').click());
-            
-            // Cikgu AI: Google Sheet Load
-            document.getElementById('loadGSheetBtn').addEventListener('click', handleGSheetLoad);
-
-            // Generate certificates
-            document.getElementById('generateBtn').addEventListener('click', generateCertificates);
-            document.getElementById('generateBtnMain').addEventListener('click', generateCertificates);
-            
-            // Print
-            document.getElementById('printBtn').addEventListener('click', printCertificates);
-            
-            // Download PDF (Editable)
-            document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
-            
-            // Download PDF (Fixed/Image) - Cikgu AI Added
-            document.getElementById('downloadFixedPdfBtn').addEventListener('click', downloadAsFixedPDF);
-            
-            // Cikgu AI: Share PDF
-            document.getElementById('shareBtn').addEventListener('click', shareCertificates);
-
-            // Clear all
-            document.getElementById('clearAllBtn').addEventListener('click', clearAll);
-            
-            // Reset mapping
-            document.getElementById('resetMappingBtn').addEventListener('click', resetMapping);
-            
-            // Cikgu AI: Toggle Grid
-            document.getElementById('toggleGridBtn').addEventListener('click', toggleGrid);
-
-            // Drag and drop for template
-            setupDragDrop('templateDropZone', handleTemplateUpload);
-            setupDragDrop('excelDropZone', handleExcelUpload);
-            
-            // Cikgu AI: Sokongan Keyboard untuk pergerakan field
-            document.addEventListener('keydown', handleKeyboardMove);
+        
+        window.addEventListener('mousemove', (e) => {
+          if (isPanning) {
+            currentX = e.clientX - startX;
+            currentY = e.clientY - startY;
+            mover.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+          }
+        });
+        
+        window.addEventListener('mouseup', () => {
+          if (isPanning) {
+            isPanning = false;
+            mover.style.cursor = 'grab';
+          }
+        });
+        
+        document.getElementById('previewContainer').addEventListener('mouseleave', () => {
+          if (isPanning) {
+            isPanning = false;
+            mover.style.cursor = 'grab';
+          }
+        });
+      }
+    });
+    
+    // ==================== FILE UPLOAD HANDLERS ====================
+    function initDropZones() {
+      const certZone = document.getElementById('certificateDropZone');
+      const excelZone = document.getElementById('excelDropZone');
+      const certInput = document.getElementById('certificateInput');
+      const excelInput = document.getElementById('excelInput');
+      
+      // Certificate Drop Zone
+      certZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        certZone.classList.add('dragover');
+      });
+      
+      certZone.addEventListener('dragleave', () => {
+        certZone.classList.remove('dragover');
+      });
+      
+      certZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        certZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+          handleCertificateUpload(file);
+        } else {
+          showToast('Sila muat naik fail gambar sahaja!', 'error');
         }
+      });
+      
+      certInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          handleCertificateUpload(e.target.files[0]);
+        }
+      });
+      
+      // Excel Drop Zone
+      excelZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        excelZone.classList.add('dragover');
+      });
+      
+      excelZone.addEventListener('dragleave', () => {
+        excelZone.classList.remove('dragover');
+      });
+      
+      excelZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        excelZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          handleExcelUpload(file);
+        }
+      });
+      
+      excelInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) {
+          handleExcelUpload(e.target.files[0]);
+        }
+      });
+    }
+    
+    function handleCertificateUpload(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          appState.certificateImage = e.target.result;
+          appState.certificateWidth = img.width;
+          appState.certificateHeight = img.height;
+          
+          document.getElementById('certificateFileName').textContent = file.name;
+          document.getElementById('certificatePreviewSmall').classList.remove('hidden');
+          
+          displayCertificate();
+          updateSteps();
+          updateGenerateReadiness();
+          showToast('Sijil berjaya dimuat naik!');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function handleExcelUpload(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          
+          if (jsonData.length < 2) {
+            showToast('Fail Excel mesti mempunyai header dan data!', 'error');
+            return;
+          }
+          
+          appState.headers = jsonData[0].map(h => String(h || '').trim());
+          appState.excelData = jsonData.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''));
+          
+          document.getElementById('excelFileName').textContent = file.name;
+          document.getElementById('excelInfo').classList.remove('hidden');
+          document.getElementById('totalRows').textContent = appState.excelData.length;
+          
+          updateGroupColumnSelect();
+          updateFieldDataSourceOptions();
+          updateDataTable();
+          updateSteps();
+          updateGenerateReadiness();
+          
+          showToast(`${appState.excelData.length} rekod berjaya dimuat!`);
+        } catch (error) {
+          console.error('Excel parse error:', error);
+          showToast('Gagal membaca fail Excel!', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
 
-        function setupStyleEditorListeners() {
-            const fontSizeInput = document.getElementById('editFontSize');
-            const colorInput = document.getElementById('editColor');
-            const fontFamilyInput = document.getElementById('editFontFamily');
-            const textAlignInput = document.getElementById('editTextAlign');
-            const verticalAlignInput = document.getElementById('editVerticalAlign');
+    async function importGoogleSheet() {
+      const url = document.getElementById('gsheetUrlInput').value;
+      if (!url) {
+        showToast('Sila masukkan URL Google Sheets', 'error');
+        return;
+      }
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match) {
+        showToast('Format URL tidak sah. Pastikan copy link penuh.', 'error');
+        return;
+      }
+      const sheetId = match[1];
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      
+      showToast('Sedang memuat turun data...');
+      try {
+        const response = await fetch(csvUrl);
+        if (!response.ok) throw new Error('Network error');
+        const csvText = await response.text();
+        
+        const workbook = XLSX.read(csvText, { type: 'string' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        if (jsonData.length < 2) {
+          showToast('Tiada data atau format tidak sah!', 'error');
+          return;
+        }
+        
+        appState.headers = jsonData[0].map(h => String(h || '').trim());
+        appState.excelData = jsonData.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''));
+        
+        document.getElementById('excelFileName').textContent = "Google Sheets Data";
+        document.getElementById('excelInfo').classList.remove('hidden');
+        document.getElementById('totalRows').textContent = appState.excelData.length;
+        
+        updateGroupColumnSelect();
+        updateFieldDataSourceOptions();
+        updateDataTable();
+        updateSteps();
+        updateGenerateReadiness();
+        
+        showToast(`${appState.excelData.length} rekod berjaya diimport!`);
+      } catch (err) {
+        console.error(err);
+        showToast('Ralat memuat data. Pastikan Sheet diset "Anyone with the link can view".', 'error');
+      }
+    }
 
-            const updateStyle = () => {
-                if (selectedDropZone) {
-                    fontSizeInput.disabled = false;
-                    selectedDropZone.style.fontSize = fontSizeInput.value + 'px';
-                    selectedDropZone.style.color = colorInput.value;
-                    selectedDropZone.style.fontFamily = fontFamilyInput.value;
-                    
-                    // Alignment Logic
-                    const hAlign = textAlignInput.value;
-                    const vAlign = verticalAlignInput.value;
-                    
-                    selectedDropZone.style.textAlign = hAlign;
-                    selectedDropZone.style.alignItems = vAlign;
-                    
-                    // Auto-adjust justify-content based on text-align for single lines
-                    if (hAlign === 'left' || hAlign === 'justify') {
-                        selectedDropZone.style.justifyContent = 'flex-start';
-                    } else if (hAlign === 'right') {
-                        selectedDropZone.style.justifyContent = 'flex-end';
-                    } else {
-                        selectedDropZone.style.justifyContent = 'center';
-                    }
-                    
-                    // Simpan data dalam dataset untuk rujukan nanti
-                    selectedDropZone.dataset.fontSize = fontSizeInput.value;
-                    selectedDropZone.dataset.color = colorInput.value;
-                    selectedDropZone.dataset.fontFamily = fontFamilyInput.value;
-                    selectedDropZone.dataset.textAlign = hAlign;
-                    selectedDropZone.dataset.verticalAlign = vAlign;
+    function importClipboardData() {
+      const text = document.getElementById('clipboardInput').value.trim();
+      if (!text) {
+        showToast('Sila tampal data terlebih dahulu', 'error');
+        return;
+      }
+      try {
+        const workbook = XLSX.read(text, { type: 'string' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        if (jsonData.length < 2) {
+          showToast('Tiada data atau format tidak sah!', 'error');
+          return;
+        }
+        
+        appState.headers = jsonData[0].map(h => String(h || '').trim());
+        appState.excelData = jsonData.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''));
+        
+        document.getElementById('excelFileName').textContent = "Data Clipboard";
+        document.getElementById('excelInfo').classList.remove('hidden');
+        document.getElementById('totalRows').textContent = appState.excelData.length;
+        
+        updateGroupColumnSelect();
+        updateFieldDataSourceOptions();
+        updateDataTable();
+        updateSteps();
+        updateGenerateReadiness();
+        
+        showToast(`${appState.excelData.length} rekod berjaya diimport!`);
+        document.getElementById('clipboardInput').value = '';
+      } catch (err) {
+        console.error(err);
+        showToast('Ralat memproses data clipboard.', 'error');
+      }
+    }
+    
+    // ==================== CERTIFICATE DISPLAY ====================
+    function displayCertificate() {
+      const canvas = document.getElementById('certificateCanvas');
+      const img = document.getElementById('certificateImage');
+      const emptyPreview = document.getElementById('emptyPreview');
+      const mover = document.getElementById('certificateMover');
+      
+      img.src = appState.certificateImage;
+      if (mover) mover.style.display = 'block';
+      if (emptyPreview) emptyPreview.style.display = 'none';
+      
+      document.getElementById('fieldConfigPanel').style.display = 'block';
+      
+      updateBackgroundVisibility();
+      updateCanvasScale();
+    }
+    
+    function updateBackgroundVisibility() {
+      const img = document.getElementById('certificateImage');
+      const canvas = document.getElementById('certificateCanvas');
+      if (appState.showBackground) {
+        img.style.visibility = 'visible';
+        canvas.style.backgroundColor = 'transparent';
+      } else {
+        img.style.visibility = 'hidden';
+        canvas.style.backgroundColor = '#ffffff';
+      }
+    }
+    
+    function updatePDFBackgroundStatus() {
+      const status = document.getElementById('pdfBgStatus');
+      status.textContent = appState.showBackground ? 'Ada latar' : 'Kosong';
+      status.style.color = appState.showBackground ? '#34d399' : '#fbbf24';
+    }
+    
+    function updateCanvasScale() {
+      const canvas = document.getElementById('certificateCanvas');
+      canvas.style.transform = `scale(${appState.zoom})`;
+      document.getElementById('zoomLevel').textContent = Math.round(appState.zoom * 100) + '%';
+    }
+    
+    function adjustZoom(delta) {
+      appState.zoom = Math.max(0.3, Math.min(2, appState.zoom + delta));
+      updateCanvasScale();
+    }
+    
+    function resetZoom() {
+      appState.zoom = 1;
+      updateCanvasScale();
+    }
+    
+    // ==================== FIELD MANAGEMENT ====================
+    function addNewField() {
+      if (!appState.certificateImage) {
+        showToast('Sila muat naik sijil terlebih dahulu!', 'error');
+        return;
+      }
+      
+      const fieldId = 'field_' + Date.now();
+      const newField = {
+        id: fieldId,
+        dataSource: appState.headers[0] || '',
+        font: 'Arial',
+        fontSize: 60,
+        fontWeight: '700',
+        color: '#000000',
+        textAlign: 'center',
+        textBaseline: 'middle',
+        x: 50,
+        y: 50,
+        width: 40,
+        height: 15
+      };
+      
+      appState.fields.push(newField);
+      renderField(newField);
+      selectField(fieldId);
+      updateFieldsList();
+      updateGenerateReadiness();
+      
+      showToast('Medan baru ditambah!');
+    }
+    
+    function renderField(field) {
+      const canvas = document.getElementById('certificateCanvas');
+      
+      let fieldEl = document.getElementById(field.id);
+      if (fieldEl) fieldEl.remove();
+      
+      fieldEl = document.createElement('div');
+      fieldEl.id = field.id;
+      fieldEl.className = 'text-field';
+      fieldEl.innerHTML = `
+        <span class="field-label">${field.dataSource || 'Tiada Data'}</span>
+        <span class="field-text">${getSampleText(field.dataSource)}</span>
+        <div class="resize-handle" onmousedown="startResize(event, '${field.id}')"></div>
+      `;
+      
+      const textEl = fieldEl.querySelector('.field-text');
+      textEl.style.fontFamily = `'${field.font}', sans-serif`;
+      textEl.style.fontWeight = field.fontWeight;
+      textEl.style.color = field.color;
+      textEl.style.textAlign = field.textAlign;
+      textEl.style.width = '100%';
+      textEl.style.whiteSpace = 'pre-wrap';
+      textEl.style.wordWrap = 'break-word';
+      textEl.style.lineHeight = '1.2';
+      
+      fieldEl.style.left = field.x + '%';
+      fieldEl.style.top = field.y + '%';
+      fieldEl.style.width = field.width + '%';
+      fieldEl.style.height = field.height + '%';
+      fieldEl.style.transform = 'translate(-50%, -50%)';
+      
+      if(field.textAlign === 'left') fieldEl.style.alignItems = 'flex-start';
+      else if(field.textAlign === 'right') fieldEl.style.alignItems = 'flex-end';
+      else fieldEl.style.alignItems = 'center';
+      
+      if(field.textBaseline === 'top') fieldEl.style.justifyContent = 'flex-start';
+      else if(field.textBaseline === 'bottom') fieldEl.style.justifyContent = 'flex-end';
+      else fieldEl.style.justifyContent = 'center';
+      
+      fieldEl.addEventListener('mousedown', (e) => {
+        if (!e.target.classList.contains('resize-handle')) {
+          startDrag(e, field.id);
+        }
+      });
+      
+      fieldEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectField(field.id);
+      });
+      
+      canvas.appendChild(fieldEl);
+      
+      setTimeout(() => {
+        textEl.style.fontSize = field.fontSize + 'px';
+      }, 0);
+    }
+    
+    function applyFieldStyles(el, field) {
+      // Obsolete. Kept to avoid undefined errors if accidentally called elsewhere.
+    }
+    
+    function getSampleText(dataSource) {
+      if (!dataSource || appState.excelData.length === 0) return '[Data]';
+      const colIndex = appState.headers.indexOf(dataSource);
+      if (colIndex === -1) return '[Data]';
+      return appState.excelData[0][colIndex] || '[Data]';
+    }
+    
+    function selectField(fieldId) {
+      // Deselect all
+      document.querySelectorAll('.text-field').forEach(el => el.classList.remove('selected'));
+      
+      // Select new
+      const fieldEl = document.getElementById(fieldId);
+      if (fieldEl) {
+        fieldEl.classList.add('selected');
+        appState.selectedFieldId = fieldId;
+        
+        const field = appState.fields.find(f => f.id === fieldId);
+        if (field) {
+          populateFieldEditor(field);
+          document.getElementById('fieldEditor').style.display = 'block';
+        }
+      }
+    }
+    
+    function populateFieldEditor(field) {
+      document.getElementById('fieldDataSource').value = field.dataSource;
+      document.getElementById('fieldFont').value = field.font;
+      document.getElementById('fieldFontSize').value = field.fontSize || 60;
+      document.getElementById('fieldFontWeight').value = field.fontWeight;
+      document.getElementById('fieldColor').value = field.color;
+      document.getElementById('fieldColorText').value = field.color;
+      document.getElementById('fieldTextAlign').value = field.textAlign;
+      document.getElementById('fieldTextBaseline').value = field.textBaseline || 'middle';
+      document.getElementById('fieldPosX').value = field.x.toFixed(1);
+      document.getElementById('fieldPosY').value = field.y.toFixed(1);
+      document.getElementById('fieldWidth').value = field.width.toFixed(1);
+      document.getElementById('fieldHeight').value = field.height.toFixed(1);
+    }
+    
+    function updateSelectedField() {
+      if (!appState.selectedFieldId) return;
+      
+      const field = appState.fields.find(f => f.id === appState.selectedFieldId);
+      if (!field) return;
+      
+      field.dataSource = document.getElementById('fieldDataSource').value;
+      field.font = document.getElementById('fieldFont').value;
+      field.fontSize = parseInt(document.getElementById('fieldFontSize').value) || 60;
+      field.fontWeight = document.getElementById('fieldFontWeight').value;
+      field.color = document.getElementById('fieldColor').value;
+      field.textAlign = document.getElementById('fieldTextAlign').value;
+      field.textBaseline = document.getElementById('fieldTextBaseline').value;
+      
+      document.getElementById('fieldColorText').value = field.color;
+      
+      renderField(field);
+      selectField(field.id);
+      updateFieldsList();
+    }
+    
+    function updateSelectedFieldPosition() {
+      if (!appState.selectedFieldId) return;
+      
+      const field = appState.fields.find(f => f.id === appState.selectedFieldId);
+      if (!field) return;
+      
+      field.x = parseFloat(document.getElementById('fieldPosX').value) || 50;
+      field.y = parseFloat(document.getElementById('fieldPosY').value) || 50;
+      field.width = parseFloat(document.getElementById('fieldWidth').value) || 40;
+      field.height = parseFloat(document.getElementById('fieldHeight').value) || 15;
+      
+      renderField(field);
+      selectField(field.id);
+    }
+    
+    function deleteSelectedField() {
+      if (!appState.selectedFieldId) return;
+      
+      const fieldEl = document.getElementById(appState.selectedFieldId);
+      if (fieldEl) fieldEl.remove();
+      
+      appState.fields = appState.fields.filter(f => f.id !== appState.selectedFieldId);
+      appState.selectedFieldId = null;
+      
+      document.getElementById('fieldEditor').style.display = 'none';
+      updateFieldsList();
+      updateGenerateReadiness();
+      
+      showToast('Medan dipadam!');
+    }
+    
+    // ==================== DRAG & DROP ====================
+    let dragState = { isDragging: false, fieldId: null, startX: 0, startY: 0, fieldStartX: 0, fieldStartY: 0 };
+    
+    function startDrag(e, fieldId) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const canvas = document.getElementById('certificateCanvas');
+      const rect = canvas.getBoundingClientRect();
+      
+      dragState.isDragging = true;
+      dragState.fieldId = fieldId;
+      dragState.startX = e.clientX;
+      dragState.startY = e.clientY;
+      
+      const field = appState.fields.find(f => f.id === fieldId);
+      dragState.fieldStartX = field.x;
+      dragState.fieldStartY = field.y;
+      
+      document.getElementById(fieldId).classList.add('dragging');
+      
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+    }
+    
+    function onDrag(e) {
+      if (!dragState.isDragging) return;
+      
+      const canvas = document.getElementById('certificateCanvas');
+      const img = document.getElementById('certificateImage');
+      
+      const deltaX = (e.clientX - dragState.startX) / (img.offsetWidth * appState.zoom) * 100;
+      const deltaY = (e.clientY - dragState.startY) / (img.offsetHeight * appState.zoom) * 100;
+      
+      const field = appState.fields.find(f => f.id === dragState.fieldId);
+      if (field) {
+        field.x = Math.max(0, Math.min(100, dragState.fieldStartX + deltaX));
+        field.y = Math.max(0, Math.min(100, dragState.fieldStartY + deltaY));
+        
+        const fieldEl = document.getElementById(field.id);
+        fieldEl.style.left = field.x + '%';
+        fieldEl.style.top = field.y + '%';
+        
+        if (appState.selectedFieldId === field.id) {
+          document.getElementById('fieldPosX').value = field.x.toFixed(1);
+          document.getElementById('fieldPosY').value = field.y.toFixed(1);
+        }
+      }
+    }
+    
+    function stopDrag() {
+      if (dragState.fieldId) {
+        document.getElementById(dragState.fieldId).classList.remove('dragging');
+      }
+      dragState.isDragging = false;
+      dragState.fieldId = null;
+      
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    }
+    
+    // ==================== RESIZE ====================
+    let resizeState = { isResizing: false, fieldId: null, startX: 0, startY: 0, startWidth: 0, startHeight: 0 };
+    
+    function startResize(e, fieldId) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      resizeState.isResizing = true;
+      resizeState.fieldId = fieldId;
+      resizeState.startX = e.clientX;
+      resizeState.startY = e.clientY;
+      
+      const field = appState.fields.find(f => f.id === fieldId);
+      resizeState.startWidth = field.width;
+      resizeState.startHeight = field.height;
+      
+      document.addEventListener('mousemove', onResize);
+      document.addEventListener('mouseup', stopResize);
+    }
+    
+    function onResize(e) {
+      if (!resizeState.isResizing) return;
+      
+      const img = document.getElementById('certificateImage');
+      const zoom = appState.zoom || 1;
+      
+      const deltaX = (e.clientX - resizeState.startX) / (img.offsetWidth * zoom) * 100;
+      const deltaY = (e.clientY - resizeState.startY) / (img.offsetHeight * zoom) * 100;
+      
+      const field = appState.fields.find(f => f.id === resizeState.fieldId);
+      if (field) {
+        field.width = Math.max(5, resizeState.startWidth + deltaX * 2);
+        field.height = Math.max(5, resizeState.startHeight + deltaY * 2);
+        
+        renderField(field);
+        
+        if (appState.selectedFieldId === field.id) {
+          document.getElementById('fieldWidth').value = field.width.toFixed(1);
+          document.getElementById('fieldHeight').value = field.height.toFixed(1);
+        }
+      }
+    }
+    
+    function stopResize() {
+      resizeState.isResizing = false;
+      resizeState.fieldId = null;
+      
+      document.removeEventListener('mousemove', onResize);
+      document.removeEventListener('mouseup', stopResize);
+    }
+    
+    // ==================== GROUP MANAGEMENT ====================
+    function updateGroupColumnSelect() {
+      const select = document.getElementById('groupColumnSelect');
+      select.innerHTML = '<option value="">-- Pilih Lajur Kumpulan --</option>';
+      
+      appState.headers.forEach(header => {
+        const opt = document.createElement('option');
+        opt.value = header;
+        opt.textContent = header;
+        select.appendChild(opt);
+      });
+      
+      document.getElementById('groupsPanel').style.display = 'block';
+      
+      select.addEventListener('change', () => {
+        appState.groupColumn = select.value;
+        calculateGroups();
+      });
+    }
+    
+    function calculateGroups() {
+      appState.groups = {};
+      
+      if (!appState.groupColumn) {
+        document.getElementById('totalGroups').textContent = '0';
+        document.getElementById('groupsList').innerHTML = '<p class="text-gray-500 text-sm">Pilih lajur kumpulan</p>';
+        return;
+      }
+      
+      const colIndex = appState.headers.indexOf(appState.groupColumn);
+      if (colIndex === -1) return;
+      
+      appState.excelData.forEach((row, rowIndex) => {
+        const groupName = String(row[colIndex] || 'Lain-lain').trim();
+        if (!appState.groups[groupName]) {
+          appState.groups[groupName] = [];
+        }
+        appState.groups[groupName].push(rowIndex);
+      });
+      
+      const groupNames = Object.keys(appState.groups);
+      document.getElementById('totalGroups').textContent = groupNames.length;
+      
+      // Initialize all groups as selected
+      appState.selectedGroups = new Set(groupNames);
+      
+      renderGroupsList();
+      updateGenerateReadiness();
+    }
+    
+    function renderGroupsList() {
+      const container = document.getElementById('groupsList');
+      container.innerHTML = '';
+      
+      Object.entries(appState.groups).forEach(([name, indices]) => {
+        const badge = document.createElement('div');
+        badge.className = 'group-badge selected';
+        badge.innerHTML = `
+          <span>${name}</span>
+          <span class="group-count">${indices.length}</span>
+        `;
+        badge.addEventListener('click', () => toggleGroup(name, badge));
+        container.appendChild(badge);
+      });
+    }
+    
+    function toggleGroup(name, badge) {
+      if (appState.selectedGroups.has(name)) {
+        appState.selectedGroups.delete(name);
+        badge.classList.remove('selected');
+      } else {
+        appState.selectedGroups.add(name);
+        badge.classList.add('selected');
+      }
+    }
+    
+    // ==================== FIELD DATA SOURCE OPTIONS ====================
+    function updateFieldDataSourceOptions() {
+      const select = document.getElementById('fieldDataSource');
+      select.innerHTML = '<option value="">-- Pilih Lajur --</option>';
+      
+      appState.headers.forEach(header => {
+        const opt = document.createElement('option');
+        opt.value = header;
+        opt.textContent = header;
+        select.appendChild(opt);
+      });
+    }
+    
+    // ==================== DATA TABLE ====================
+    function updateDataTable() {
+      const container = document.getElementById('dataTableContainer');
+      const noData = document.getElementById('noDataMessage');
+      const thead = document.getElementById('dataTableHead');
+      const tbody = document.getElementById('dataTableBody');
+      
+      if (appState.excelData.length === 0) {
+        container.classList.add('hidden');
+        noData.classList.remove('hidden');
+        return;
+      }
+      
+      container.classList.remove('hidden');
+      noData.classList.add('hidden');
+      
+      // Header
+      thead.innerHTML = '<tr>' + appState.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+      
+      // Body (limit to 100 rows for performance)
+      const displayData = appState.excelData.slice(0, 100);
+      tbody.innerHTML = displayData.map(row => 
+        '<tr>' + appState.headers.map((_, i) => `<td>${row[i] !== undefined ? row[i] : ''}</td>`).join('') + '</tr>'
+      ).join('');
+      
+      document.getElementById('dataRowCount').textContent = appState.excelData.length;
+    }
+    
+    // ==================== FIELD LIST ====================
+    function updateFieldsList() {
+      const container = document.getElementById('fieldsList');
+      container.innerHTML = '';
+      
+      appState.fields.forEach(field => {
+        const item = document.createElement('div');
+        item.className = 'field-config-item cursor-pointer';
+        if (appState.selectedFieldId === field.id) {
+          item.style.borderColor = 'rgba(34, 211, 238, 0.6)';
+        }
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-white font-medium">${field.dataSource || 'Tiada Data'}</span>
+              <span class="text-gray-500 text-xs ml-2">${field.font} ${field.fontSize}px</span>
+            </div>
+            <div class="w-4 h-4 rounded" style="background: ${field.color}"></div>
+          </div>
+        `;
+        item.addEventListener('click', () => selectField(field.id));
+        container.appendChild(item);
+      });
+    }
+    
+    // ==================== TAB SWITCHING ====================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+      
+      document.getElementById('designTab').classList.add('hidden');
+      document.getElementById('dataTab').classList.add('hidden');
+      document.getElementById('generateTab').classList.add('hidden');
+      
+      document.getElementById(tabName + 'Tab').classList.remove('hidden');
+    }
+    
+    // ==================== STEP INDICATOR ====================
+    function updateSteps() {
+      const step1 = document.getElementById('step1');
+      const step2 = document.getElementById('step2');
+      const step3 = document.getElementById('step3');
+      
+      if (appState.certificateImage && appState.excelData.length > 0) {
+        step1.classList.add('completed');
+        step1.classList.remove('active');
+        step2.classList.add('active');
+        
+        if (appState.fields.length > 0) {
+          step2.classList.add('completed');
+          step2.classList.remove('active');
+          step3.classList.add('active');
+        }
+      }
+      
+      // Update status badge
+      const badge = document.getElementById('statusBadge');
+      if (appState.certificateImage && appState.excelData.length > 0 && appState.fields.length > 0) {
+        badge.innerHTML = '<span class="status-ready">✓ Sedia untuk jana</span>';
+      } else {
+        badge.innerHTML = '<span class="status-pending">⏳ Sila lengkapkan tetapan</span>';
+      }
+    }
+    
+    // ==================== GENERATE READINESS ====================
+    function updateGenerateReadiness() {
+      const notReady = document.getElementById('generateNotReady');
+      const ready = document.getElementById('generateReady');
+      
+      const hasCert = !!appState.certificateImage;
+      const hasExcel = appState.excelData.length > 0;
+      const hasFields = appState.fields.length > 0;
+      
+      document.getElementById('checkCert').innerHTML = hasCert 
+        ? '<span class="text-green-400">✓</span> Gambar sijil dimuat naik'
+        : '<span class="text-red-400">✗</span> Muat naik gambar sijil';
+        
+      document.getElementById('checkExcel').innerHTML = hasExcel
+        ? '<span class="text-green-400">✓</span> Fail Excel dimuat naik'
+        : '<span class="text-red-400">✗</span> Muat naik fail Excel';
+        
+      document.getElementById('checkFields').innerHTML = hasFields
+        ? '<span class="text-green-400">✓</span> Medan ditambah'
+        : '<span class="text-red-400">✗</span> Tambah sekurang-kurangnya satu medan';
+      
+      if (hasCert && hasExcel && hasFields) {
+        notReady.classList.add('hidden');
+        ready.classList.remove('hidden');
+        
+        document.getElementById('genTotalCerts').textContent = appState.excelData.length;
+        document.getElementById('genTotalFields').textContent = appState.fields.length;
+        
+        // Update group checkboxes
+        updateGroupCheckboxes();
+      } else {
+        notReady.classList.remove('hidden');
+        ready.classList.add('hidden');
+      }
+    }
+    
+    function updateGroupCheckboxes() {
+      const container = document.getElementById('groupCheckboxes');
+      const section = document.getElementById('groupSelectionSection');
+      
+      const groupNames = Object.keys(appState.groups);
+      
+      if (groupNames.length > 0) {
+        section.style.display = 'block';
+        container.innerHTML = '';
+        
+        groupNames.forEach(name => {
+          const label = document.createElement('label');
+          label.className = 'group-badge cursor-pointer';
+          if (appState.selectedGroups.has(name)) {
+            label.classList.add('selected');
+          }
+          label.innerHTML = `
+            <input type="checkbox" class="hidden" value="${name}" ${appState.selectedGroups.has(name) ? 'checked' : ''}>
+            <span>${name}</span>
+            <span class="group-count">${appState.groups[name].length}</span>
+          `;
+          label.addEventListener('click', (e) => {
+            const cb = label.querySelector('input');
+            cb.checked = !cb.checked;
+            if (cb.checked) {
+              appState.selectedGroups.add(name);
+              label.classList.add('selected');
+            } else {
+              appState.selectedGroups.delete(name);
+              label.classList.remove('selected');
+            }
+            updatePDFCount();
+          });
+          container.appendChild(label);
+        });
+        
+        updatePDFCount();
+      } else {
+        section.style.display = 'none';
+      }
+    }
+    
+    function selectAllGroups() {
+      Object.keys(appState.groups).forEach(name => appState.selectedGroups.add(name));
+      updateGroupCheckboxes();
+    }
+    
+    function deselectAllGroups() {
+      appState.selectedGroups.clear();
+      updateGroupCheckboxes();
+    }
+    
+    function updatePDFCount() {
+      const mode = document.querySelector('input[name="outputMode"]:checked').value;
+      let count = 1;
+      
+      if (mode === 'byGroup') {
+        count = appState.selectedGroups.size || 1;
+      } else if (mode === 'individual') {
+        let total = 0;
+        appState.selectedGroups.forEach(name => {
+          total += appState.groups[name].length;
+        });
+        count = total || appState.excelData.length;
+      }
+      
+      document.getElementById('genTotalPDFs').textContent = count;
+    }
+    
+    // Listen for output mode changes
+    document.querySelectorAll('input[name="outputMode"]').forEach(radio => {
+      radio.addEventListener('change', updatePDFCount);
+    });
+    
+    function renderTextOnCanvas(ctx, text, field, cvs) {
+        let fontSize = field.fontSize || 60;
+        
+        let x = (field.x / 100) * cvs.width;
+        let y = (field.y / 100) * cvs.height;
+        let w = (field.width / 100) * cvs.width;
+        
+        ctx.font = `${field.fontWeight} ${fontSize}px '${field.font}'`;
+        ctx.fillStyle = field.color;
+        ctx.textAlign = field.textAlign;
+        
+        let alignV = field.textBaseline || 'middle';
+        let h = (field.height / 100) * cvs.height;
+        
+        if (alignV === 'top') {
+            ctx.textBaseline = 'top';
+        } else if (alignV === 'bottom') {
+            ctx.textBaseline = 'bottom';
+        } else {
+            ctx.textBaseline = 'middle';
+        }
+        
+        let lines = [];
+        let lineHeight = 1.2;
+        
+        let explicitLines = text.split(/\r?\n/);
+        
+        for (let i = 0; i < explicitLines.length; i++) {
+            let eLine = explicitLines[i];
+            if (eLine === "") {
+                lines.push("");
+                continue;
+            }
+            let words = eLine.split(' ');
+            let currentLine = words[0] || "";
+            
+            for (let j = 1; j < words.length; j++) {
+                let word = words[j];
+                let width = ctx.measureText(currentLine + " " + word).width;
+                if (width <= w) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
                 }
-            };
-
-            fontSizeInput.addEventListener('input', updateStyle);
-            colorInput.addEventListener('input', updateStyle);
-            fontFamilyInput.addEventListener('change', updateStyle);
-            textAlignInput.addEventListener('change', updateStyle);
-            verticalAlignInput.addEventListener('change', updateStyle);
+            }
+            if(currentLine) lines.push(currentLine);
         }
         
-        // Cikgu AI: Fungsi Pergerakan Keyboard (Mouse & Arrow Keys)
-        function handleKeyboardMove(e) {
-            if (!selectedDropZone) return;
-            
-            // Jangan ganggu jika user sedang menaip input nilai
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
-            // Hanya respon pada Arrow Keys
-            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-
-            e.preventDefault(); // Elak scroll page
-
-            let x = parseInt(selectedDropZone.style.left || 0);
-            let y = parseInt(selectedDropZone.style.top || 0);
-            
-            // Shift = Gerak Laju (10px), Biasa = Gerak Tepat (1px)
-            const step = e.shiftKey ? 10 : 1;
-
-            switch(e.key) {
-                case 'ArrowLeft': x -= step; break;
-                case 'ArrowRight': x += step; break;
-                case 'ArrowUp': y -= step; break;
-                case 'ArrowDown': y += step; break;
-            }
-
-            selectedDropZone.style.left = x + 'px';
-            selectedDropZone.style.top = y + 'px';
+        let totalTextHeight = lines.length * (fontSize * lineHeight);
+        let startY;
+        
+        if (alignV === 'top') {
+            startY = y - h/2;
+        } else if (alignV === 'bottom') {
+            startY = y + h/2 - totalTextHeight + (fontSize * lineHeight);
+        } else {
+            startY = y - (totalTextHeight / 2) + (fontSize * lineHeight / 2);
         }
         
-        // Cikgu AI: Toggle Grid Function
-        function toggleGrid() {
-            const grid = document.getElementById('gridOverlay');
-            grid.classList.toggle('active');
-            const btn = document.getElementById('toggleGridBtn');
-            btn.textContent = grid.classList.contains('active') ? '📏 Tutup Grid' : '📏 Grid Panduan';
+        for (let i = 0; i < lines.length; i++) {
+            let lineY = startY + (i * (fontSize * lineHeight));
+            let drawX = x; 
+            if (field.textAlign === 'left') drawX = x - w/2;
+            if (field.textAlign === 'right') drawX = x + w/2;
+            
+            ctx.fillText(lines[i], drawX, lineY);
         }
+    }
 
-        // ============================================
-        // TEMPLATE HANDLING
-        // ============================================
-        function handleTemplateUpload(event) {
-            const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                templateDataURL = e.target.result;
-                const img = document.getElementById('certificateTemplate');
-                img.src = templateDataURL;
-                img.style.display = 'block';
-                
-                document.getElementById('templatePreviewContainer').classList.remove('hidden');
-                
-                showStatus('Template berjaya dimuat naik!', 'success');
-                
-                // Reset drop zones if template changes
-                resetMapping();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // ============================================
-        // EXCEL & DATA HANDLING (UPDATED)
-        // ============================================
+    // ==================== PDF GENERATION ====================
+    async function generatePDFs() {
+      const { jsPDF } = window.jspdf;
+      
+      const btn = document.getElementById('generateBtn');
+      const progressDiv = document.getElementById('generateProgress');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+      const progressDetail = document.getElementById('progressDetail');
+      
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="w-6 h-6 inline mr-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Menjana...';
+      progressDiv.classList.remove('hidden');
+      
+      const mode = document.querySelector('input[name="outputMode"]:checked').value;
+      
+      try {
+        // Determine which rows to process
+        let rowsToProcess = [];
         
-        // Helper to process workbook object (from file or url)
-        function processWorkbook(workbook) {
-             try {
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
-                
-                if (jsonData.length === 0) {
-                    showStatus('Fail data kosong!', 'error');
-                    return;
-                }
-                
-                headers = jsonData[0]; // First row is headers
-                excelData = jsonData.slice(1); // Rest is data
-                
-                document.getElementById('excelStatus').innerHTML = `
-                    <div class="status-success">
-                        ✅ Berjaya muat naik: ${excelData.length} rekod dengan ${headers.length} medan
-                    </div>
-                `;
-                document.getElementById('excelStatus').classList.remove('hidden');
-                
-                displayHeadersForMapping();
-                document.getElementById('mappingSection').classList.remove('hidden');
-                
-                showStatus(`Berjaya baca ${excelData.length} rekod!`, 'success');
-            } catch (error) {
-                 console.error('Error processing workbook:', error);
-                 showStatus('Ralat memproses data: ' + error.message, 'error');
+        if (Object.keys(appState.groups).length > 0 && appState.selectedGroups.size > 0) {
+          appState.selectedGroups.forEach(groupName => {
+            if (appState.groups[groupName]) {
+              rowsToProcess.push(...appState.groups[groupName].map(idx => ({ idx, group: groupName })));
             }
-        }
-
-        function handleExcelUpload(event) {
-            const file = event.target.files?.[0] || event.dataTransfer?.files?.[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    processWorkbook(workbook);
-                } catch (error) {
-                    console.error('Error reading Excel:', error);
-                    showStatus('Ralat membaca fail Excel: ' + error.message, 'error');
-                }
-            };
-            reader.readAsArrayBuffer(file);
+          });
+        } else {
+          rowsToProcess = appState.excelData.map((_, idx) => ({ idx, group: 'All' }));
         }
         
-        // Cikgu AI: Function to load Google Sheet via CSV Export
-        async function handleGSheetLoad() {
-            const urlInput = document.getElementById('gSheetUrl').value;
-            // Extract ID: looks for /d/ID/ in url
-            const idMatch = urlInput.match(times => /\/d\/([a-zA-Z0-9-_]+)/.exec(urlInput));
-            // Fix regex call safely
-            const safeMatch = urlInput.match(/\/d\/([a-zA-Z0-9-_]+)/);
-
-            if (!safeMatch) {
-                showStatus('Link Google Sheet tidak sah! Sila guna link standard.', 'error');
-                return;
-            }
-            
-            const sheetId = safeMatch[1];
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-            
-            showStatus('⏳ Sedang memuat turun data dari Google Sheet...', 'info');
-            
-            try {
-                const response = await fetch(csvUrl);
-                if (!response.ok) throw new Error('Gagal akses URL (CORS/Private)');
-                const csvText = await response.text();
-                
-                // Parse CSV using XLSX
-                const workbook = XLSX.read(csvText, {type: 'string'});
-                processWorkbook(workbook);
-                
-            } catch (error) {
-                console.error(error);
-                showStatus('Gagal: Pastikan Sheet "Published to Web" (File > Share > Publish to web) atau Public.', 'error');
-            }
+        if (rowsToProcess.length === 0) {
+          showToast('Tiada data untuk dijana!', 'error');
+          return;
         }
-
-        function displayHeadersForMapping() {
-            const container = document.getElementById('headersContainer');
-            container.innerHTML = '';
+        
+        // Get original image for Native 4K drawing into PDF
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = appState.certificateImage;
+        });
+        
+        // Determine PDF orientation
+        const orientation = img.width > img.height ? 'l' : 'p';
+        const pdfWidth = orientation === 'l' ? 297 : 210;
+        const pdfHeight = orientation === 'l' ? 210 : 297;
+        
+        const drawCertificateToPDF = (pdf, idx) => {
+          if (appState.showBackground) {
+            let format = 'JPEG';
+            if (appState.certificateImage.startsWith('data:image/png')) format = 'PNG';
+            if (appState.certificateImage.startsWith('data:image/webp')) format = 'WEBP';
+            pdf.addImage(appState.certificateImage, format, 0, 0, pdfWidth, pdfHeight, 'CERT_BG');
+          } else {
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+          }
+          
+          appState.fields.forEach(field => {
+            const colIndex = appState.headers.indexOf(field.dataSource);
+            const text = colIndex !== -1 ? String(appState.excelData[idx][colIndex] || '') : '';
+            if (!text) return;
             
-            headers.forEach((header, index) => {
-                const headerElement = document.createElement('div');
-                headerElement.className = 'draggable-header';
-                headerElement.draggable = true;
-                headerElement.dataset.headerIndex = index;
-                headerElement.textContent = header;
-                
-                // Drag start
-                headerElement.addEventListener('dragstart', function(e) {
-                    e.dataTransfer.setData('text/plain', index);
-                    e.dataTransfer.effectAllowed = 'move';
+            let x = (field.x / 100) * pdfWidth;
+            let y = (field.y / 100) * pdfHeight;
+            let w = (field.width / 100) * pdfWidth;
+            let h = (field.height / 100) * pdfHeight;
+            
+            let fontSizePx = field.fontSize || 60;
+            let r = pdfHeight / img.height;
+            let fontSizePt = fontSizePx * r * (72 / 25.4);
+            
+            pdf.setFontSize(fontSizePt);
+            
+            let fontStyle = (field.fontWeight === 'bold' || field.fontWeight === '700') ? 'bold' : 'normal';
+            let fontName = 'helvetica';
+            let fNameLower = (field.font || '').toLowerCase();
+            if (fNameLower.includes('times') || fNameLower.includes('merriweather') || fNameLower.includes('playfair') || fNameLower.includes('lora') || fNameLower.includes('baskerville')) fontName = 'times';
+            else if (fNameLower.includes('courier') || fNameLower.includes('inconsolata')) fontName = 'courier';
+            
+            pdf.setFont(fontName, fontStyle);
+            
+            let hex = field.color || '#000000';
+            let rColor = parseInt(hex.substring(1,3), 16) || 0;
+            let gColor = parseInt(hex.substring(3,5), 16) || 0;
+            let bColor = parseInt(hex.substring(5,7), 16) || 0;
+            pdf.setTextColor(rColor, gColor, bColor);
+            
+            let lines = pdf.splitTextToSize(text, w);
+            let lineHeightPt = fontSizePt * 1.2;
+            let lineHeightMm = lineHeightPt * (25.4 / 72);
+            let totalTextHeightMm = lines.length * lineHeightMm;
+            
+            let alignV = field.textBaseline || 'middle';
+            let startY = y;
+            if (alignV === 'top') {
+                startY = y - h/2 + (lineHeightMm / 2);
+            } else if (alignV === 'bottom') {
+                startY = y + h/2 - totalTextHeightMm + (lineHeightMm / 2);
+            } else {
+                startY = y - (totalTextHeightMm / 2) + (lineHeightMm / 2);
+            }
+            
+            let drawX = x;
+            if (field.textAlign === 'left') drawX = x - w/2;
+            if (field.textAlign === 'right') drawX = x + w/2;
+            
+            lines.forEach((line, index) => {
+                let lineY = startY + (index * lineHeightMm);
+                pdf.text(line, drawX, lineY, {
+                    align: field.textAlign || 'center',
+                    baseline: 'middle'
                 });
-                
-                container.appendChild(headerElement);
             });
+          });
+        };
+        
+        if (mode === 'single') {
+          // Single PDF with all certificates
+          const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+          
+          for (let i = 0; i < rowsToProcess.length; i++) {
+            const { idx } = rowsToProcess[i];
             
-            // Setup drop zones on template preview
-            const templatePreview = document.getElementById('templatePreview');
-            templatePreview.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            });
+            if (i > 0) pdf.addPage();
             
-            templatePreview.addEventListener('drop', function(e) {
-                e.preventDefault();
-                
-                const headerIndex = e.dataTransfer.getData('text/plain');
-                if (headerIndex === '') return;
-                
-                // Calculate position relative to template preview
-                const rect = templatePreview.getBoundingClientRect();
-                // We need to account for scroll positions if any
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                createDropZone(parseInt(headerIndex), x, y);
-            });
-        }
-
-        // ============================================
-        // DROP ZONE HANDLING (UPDATED)
-        // ============================================
-        function createDropZone(headerIndex, x, y) {
-            const templatePreview = document.getElementById('templatePreview');
+            drawCertificateToPDF(pdf, idx);
             
-            // Cikgu AI: Create resizable drop zone
-            const dropZone = document.createElement('div');
-            dropZone.className = 'drop-zone';
-            dropZone.dataset.headerIndex = headerIndex;
+            // Update progress
+            const progress = ((i + 1) / rowsToProcess.length) * 100;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = Math.round(progress) + '%';
+            progressDetail.textContent = `Memproses sijil ${i + 1} daripada ${rowsToProcess.length}`;
             
-            // Center the initial box on the mouse (assuming default width 200px)
-            const defaultWidth = 200;
-            const adjustedX = x - (defaultWidth / 2);
-
-            dropZone.style.left = adjustedX + 'px';
-            dropZone.style.top = y + 'px';
-            dropZone.style.width = defaultWidth + 'px';
-            dropZone.style.height = '50px'; // Cikgu AI: Fixed height for auto-font calculation
-
-            dropZone.textContent = headers[headerIndex];
+            await new Promise(r => setTimeout(r, 10));
+          }
+          
+          const pdfBlob = pdf.output('blob');
+          await saveFileToSelectedFolder('sijil_semua.pdf', pdfBlob);
+          showToast(`${rowsToProcess.length} sijil berjaya dijana!`);
+          
+        } else if (mode === 'byGroup') {
+          // Separate PDF per group
+          const groupedRows = {};
+          rowsToProcess.forEach(({ idx, group }) => {
+            if (!groupedRows[group]) groupedRows[group] = [];
+            groupedRows[group].push(idx);
+          });
+          
+          const groups = Object.keys(groupedRows);
+          let totalProcessed = 0;
+          
+          for (const groupName of groups) {
+            const indices = groupedRows[groupName];
+            const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
             
-            // Default Styles (Will be overridden by Auto Size immediately)
-            dropZone.style.fontSize = '20px';
-            dropZone.style.color = '#000000';
-            dropZone.style.fontFamily = "'Segoe UI', sans-serif";
-            dropZone.style.textAlign = 'center';
-            dropZone.style.justifyContent = 'center';
-            dropZone.style.alignItems = 'center';
-            
-            // Store defaults in dataset
-            dropZone.dataset.fontSize = '20';
-            dropZone.dataset.color = '#000000';
-            dropZone.dataset.fontFamily = "'Segoe UI', sans-serif";
-            dropZone.dataset.textAlign = 'center';
-            dropZone.dataset.verticalAlign = 'center';
-            
-            // Cikgu AI: Auto Font Size Logic via ResizeObserver
-            const resizeObserver = new ResizeObserver(entries => {
-                for (let entry of entries) {
-                    // Logic: Font size ~ 45% of box height to fit text nicely
-                    const h = entry.contentRect.height;
-                    if(h < 15) return; // ignore too small
-                    
-                    const autoFontSize = Math.max(10, Math.floor(h * 0.45)); // 0.45 factor allows padding & descenders
-                    
-                    dropZone.style.fontSize = autoFontSize + 'px';
-                    dropZone.dataset.fontSize = autoFontSize;
-                    
-                    // Sync with editor if selected
-                    if(selectedDropZone === dropZone) {
-                        const fontSizeInput = document.getElementById('editFontSize');
-                        if(fontSizeInput) fontSizeInput.value = autoFontSize;
-                    }
-                }
-            });
-            resizeObserver.observe(dropZone);
-
-            // SELECT FUNCTION (Show Editor)
-            dropZone.addEventListener('click', function(e) {
-                e.stopPropagation();
-                selectZone(dropZone);
-            });
-
-            // DRAGGABLE LOGIC
-            dropZone.addEventListener('mousedown', function(e) {
-                if (e.target.className === 'remove-btn') return;
-                
-                // Select automatically on drag start
-                selectZone(dropZone);
-                
-                const offsetX = e.clientX - dropZone.getBoundingClientRect().left;
-                const offsetY = e.clientY - dropZone.getBoundingClientRect().top;
-                
-                function onMouseMove(e) {
-                    const rect = templatePreview.getBoundingClientRect();
-                    let newX = e.clientX - rect.left - offsetX;
-                    let newY = e.clientY - rect.top - offsetY;
-                    
-                    // Keep within bounds
-                    newX = Math.max(0, Math.min(newX, rect.width - dropZone.offsetWidth));
-                    newY = Math.max(0, Math.min(newY, rect.height - dropZone.offsetHeight));
-                    
-                    dropZone.style.left = newX + 'px';
-                    dropZone.style.top = newY + 'px';
-                }
-                
-                function onMouseUp() {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                }
-                
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
-            
-            // Remove button
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'remove-btn';
-            removeBtn.innerHTML = '×';
-            removeBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (selectedDropZone === dropZone) {
-                     document.getElementById('styleEditor').classList.add('hidden');
-                     selectedDropZone = null;
-                }
-                dropZone.remove();
-            });
-            dropZone.appendChild(removeBtn);
-            
-            templatePreview.appendChild(dropZone);
-            dropZones.push(dropZone);
-            
-            // Select newly created zone
-            selectZone(dropZone);
-        }
-
-        function selectZone(zone) {
-            // Remove active class from old zone
-            if (selectedDropZone) selectedDropZone.classList.remove('selected-zone');
-            
-            selectedDropZone = zone;
-            selectedDropZone.classList.add('selected-zone');
-            
-            // Show editor
-            const editor = document.getElementById('styleEditor');
-            editor.classList.remove('hidden');
-            
-            // Update Editor Values from Zone
-            document.getElementById('editingFieldName').textContent = headers[zone.dataset.headerIndex];
-            document.getElementById('editFontSize').value = zone.dataset.fontSize || 20;
-            document.getElementById('editColor').value = zone.dataset.color || '#000000';
-            document.getElementById('editFontFamily').value = zone.dataset.fontFamily || "'Segoe UI', sans-serif";
-            document.getElementById('editTextAlign').value = zone.dataset.textAlign || 'center';
-            document.getElementById('editVerticalAlign').value = zone.dataset.verticalAlign || 'center';
-        }
-
-        function resetMapping() {
-            const templatePreview = document.getElementById('templatePreview');
-            const dropZones = templatePreview.querySelectorAll('.drop-zone');
-            dropZones.forEach(zone => zone.remove());
-            
-            selectedDropZone = null;
-            document.getElementById('styleEditor').classList.add('hidden');
-            showStatus('Semua kedudukan telah direset', 'info');
-        }
-
-        // ============================================
-        // CERTIFICATE GENERATION (UPDATED Logic)
-        // ============================================
-        function generateCertificates() {
-            if (!templateDataURL) {
-                showStatus('Sila muat naik template sijil dahulu!', 'error');
-                return;
+            for (let i = 0; i < indices.length; i++) {
+              const idx = indices[i];
+              
+              if (i > 0) pdf.addPage();
+              
+              drawCertificateToPDF(pdf, idx);
+              
+              totalProcessed++;
+              const progress = (totalProcessed / rowsToProcess.length) * 100;
+              progressFill.style.width = progress + '%';
+              progressText.textContent = Math.round(progress) + '%';
+              progressDetail.textContent = `Kumpulan: ${groupName} - Sijil ${i + 1}/${indices.length}`;
+              
+              await new Promise(r => setTimeout(r, 10));
             }
             
-            if (!excelData || excelData.length === 0) {
-                showStatus('Sila muat naik fail Excel dahulu!', 'error');
-                return;
-            }
+            const pdfBlob = pdf.output('blob');
+            const safeFileName = groupName.replace(/[^a-zA-Z0-9]/g, '_');
+            await saveFileToSelectedFolder(`sijil_${safeFileName}.pdf`, pdfBlob);
+          }
+          
+          showToast(`${groups.length} fail PDF berjaya dijana!`);
+          
+        } else if (mode === 'individual') {
+          // Individual PDF per certificate
+          for (let i = 0; i < rowsToProcess.length; i++) {
+            const { idx } = rowsToProcess[i];
+            const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
             
-            const templatePreview = document.getElementById('templatePreview');
-            const dropZones = templatePreview.querySelectorAll('.drop-zone');
-            const templateImg = document.getElementById('certificateTemplate');
+            let fileName = `sijil_${i + 1}`;
             
-            if (dropZones.length === 0) {
-                showStatus('Sila letakkan field pada template dahulu!', 'error');
-                return;
-            }
-            
-            const previewContainer = document.getElementById('previewContainer');
-            previewContainer.innerHTML = '';
-            
-            // Get Mapping Dimensions (Original reference)
-            const mapWidth = templatePreview.offsetWidth;
-            const mapHeight = templatePreview.offsetHeight;
-            
-            // Map field positions as PERCENTAGES to avoid position jumping
-            const fieldConfigs = Array.from(dropZones).map(zone => {
-                return {
-                    headerIndex: parseInt(zone.dataset.headerIndex),
-                    leftPct: ((zone.offsetLeft) / mapWidth) * 100,
-                    topPct: ((zone.offsetTop) / mapHeight) * 100,
-                    widthPct: (zone.offsetWidth / mapWidth) * 100,
-                    heightPct: (zone.offsetHeight / mapHeight) * 100,
-                    fontSize: parseInt(zone.dataset.fontSize),
-                    color: zone.dataset.color,
-                    fontFamily: zone.dataset.fontFamily,
-                    textAlign: zone.dataset.textAlign || 'center',
-                    verticalAlign: zone.dataset.verticalAlign || 'center'
-                };
+            // Resolve filename logic first
+            appState.fields.forEach(field => {
+              const colIndex = appState.headers.indexOf(field.dataSource);
+              const text = colIndex !== -1 ? String(appState.excelData[idx][colIndex] || '') : '';
+              if (field === appState.fields[0] && text) {
+                fileName = text.replace(/[^a-zA-Z0-9]/g, '_');
+              }
             });
             
-            // Generate certificate for each row
-            excelData.forEach((row, rowIndex) => {
-                const certificate = document.createElement('div');
-                certificate.className = 'certificate-preview';
-                
-                // Use IMG tag for background to ensure perfect scaling ratio
-                const bgImg = document.createElement('img');
-                bgImg.src = templateDataURL;
-                bgImg.className = 'bg-img';
-                certificate.appendChild(bgImg);
-                
-                // Add fields
-                fieldConfigs.forEach(config => {
-                    const field = document.createElement('div');
-                    field.className = 'preview-field';
-                    
-                    // Apply Percentage Positions
-                    field.style.left = config.leftPct + '%';
-                    field.style.top = config.topPct + '%';
-                    field.style.width = config.widthPct + '%';
-                    field.style.height = config.heightPct + '%';
-                    
-                    // Apply Styles
-                    field.style.fontSize = config.fontSize + 'px';
-                    field.style.color = config.color;
-                    field.style.fontFamily = config.fontFamily;
-                    field.style.fontWeight = 'bold';
-                    
-                    // Apply Alignment
-                    field.style.textAlign = config.textAlign;
-                    field.style.alignItems = config.verticalAlign;
-                    
-                    if (config.textAlign === 'left' || config.textAlign === 'justify') {
-                        field.style.justifyContent = 'flex-start';
-                    } else if (config.textAlign === 'right') {
-                        field.style.justifyContent = 'flex-end';
-                    } else {
-                        field.style.justifyContent = 'center';
-                    }
-                    
-                    // Cikgu AI: Ensure text wraps within the box
-                    field.textContent = row[config.headerIndex] || '';
-                    
-                    certificate.appendChild(field);
-                });
-                
-                previewContainer.appendChild(certificate);
-            });
+            drawCertificateToPDF(pdf, idx);
             
-            document.getElementById('previewCard').classList.remove('hidden');
-            certificatesGenerated = true;
+            const pdfBlob = pdf.output('blob');
+            await saveFileToSelectedFolder(`${fileName}.pdf`, pdfBlob);
             
-            showStatus(`Berjaya jana ${excelData.length} sijil!`, 'success');
-        }
-
-        // ============================================
-        // PRINT & EXPORT
-        // ============================================
-        function printCertificates() {
-            if (!certificatesGenerated) {
-                showStatus('Sila jana preview sijil dahulu!', 'error');
-                return;
-            }
-            window.print();
+            const progress = ((i + 1) / rowsToProcess.length) * 100;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = Math.round(progress) + '%';
+            progressDetail.textContent = `Menjana sijil ${i + 1} daripada ${rowsToProcess.length}`;
+            
+            await new Promise(r => setTimeout(r, 50));
+          }
+          
+          showToast(`${rowsToProcess.length} fail PDF berjaya dijana!`);
         }
         
-        // Cikgu AI: Helper function untuk jana PDF dengan teks boleh edit
-        async function createPDFDocument() {
-            const { jsPDF } = window.jspdf;
-            const previews = document.querySelectorAll('.certificate-preview');
-            
-            if (previews.length === 0) return null;
+      } catch (error) {
+        console.error('PDF generation error:', error);
+        showToast('Ralat semasa menjana PDF!', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Jana PDF';
+        
+        setTimeout(() => {
+          progressDiv.classList.add('hidden');
+          progressFill.style.width = '0%';
+        }, 2000);
+      }
+    }
+    
+    // ==================== TOAST NOTIFICATION ====================
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show' + (type === 'error' ? ' error' : '');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    // ==================== SAVE FOLDER SELECTION ====================
+    // Dibuang bagi mengelakkan ralat 'System File' pada pelayar web
+    
+    // ==================== ENHANCED DOWNLOAD HANDLER ====================
+    async function saveFileToSelectedFolder(filename, blob) {
+      // Terus menggunakan kaedah standard muat turun bagi mengelakkan 
+      // ralat sekuriti 'System File' ketika memilih folder manual
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    }
 
-            // Get dimensions from first preview
-            const firstContainer = previews[0];
-            // Use container size (px) for coordinate mapping
-            const pdfWidth = firstContainer.offsetWidth;
-            const pdfHeight = firstContainer.offsetHeight;
+    async function previewFinalCertificate() {
+      if (appState.excelData.length === 0 || !appState.certificateImage) {
+        showToast('Sila muat naik sijil dan data dahulu!', 'error');
+        return;
+      }
 
-            const doc = new jsPDF({ 
-                orientation: pdfWidth > pdfHeight ? 'l' : 'p',
-                unit: 'px',
-                format: [pdfWidth, pdfHeight],
-                compress: true
-            });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const img = new Image();
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.src = appState.certificateImage;
+      });
+      
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (appState.showBackground) {
+        ctx.drawImage(img, 0, 0);
+      }
+      
+      const idx = 0; // first record
+      
+      appState.fields.forEach(field => {
+        const colIndex = appState.headers.indexOf(field.dataSource);
+        const text = colIndex !== -1 ? String(appState.excelData[idx][colIndex] || '') : '';
+        renderTextOnCanvas(ctx, text, field, canvas);
+      });
+      
+      const previewImg = document.getElementById('finalPreviewImage');
+      previewImg.src = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('finalPreviewContainer').classList.remove('hidden');
+      
+      showToast('Preview berjaya dijana!');
+    }
 
-            for (let i = 0; i < previews.length; i++) {
-                if (i > 0) doc.addPage([pdfWidth, pdfHeight], pdfWidth > pdfHeight ? 'l' : 'p');
+    function shareToSocial() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Certificate Generator Pro',
+          text: 'Saya menjana sijil dengan mudah menggunakan Certificate Generator Pro!',
+          url: window.location.href
+        }).then(() => showToast('Berjaya dikongsikan!'))
+          .catch(err => console.error('Share failed:', err));
+      } else {
+        showToast('Pelayar ini tidak menyokong fungsi Share.', 'error');
+      }
+    }
 
-                const container = previews[i];
-                const bgImg = container.querySelector('.bg-img');
-                
-                // Draw Background Image
-                doc.addImage(bgImg, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-
-                // Draw Text Fields as Vectors (Editable Text)
-                const fields = container.querySelectorAll('.preview-field');
-                
-                fields.forEach(field => {
-                    const style = window.getComputedStyle(field);
-                    const text = field.innerText; // Use innerText to preserve newlines
-                    
-                    // Coordinates & Dimensions
-                    const x = field.offsetLeft;
-                    const y = field.offsetTop;
-                    const w = field.offsetWidth;
-                    const h = field.offsetHeight;
-                    
-                    // Styles
-                    const fontSize = parseFloat(style.fontSize);
-                    const color = style.color; // rgb()
-                    const align = style.textAlign; // left, center, right
-                    const vAlign = style.alignItems; // flex-start, center, flex-end
-                    const fontFamily = style.fontFamily.toLowerCase();
-                    const fontWeight = style.fontWeight;
-                    
-                    // Set Color
-                    const rgb = color.match(/\d+/g);
-                    if (rgb) doc.setTextColor(parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2]));
-                    
-                    // Set Font (Basic Mapping to Standard PDF Fonts)
-                    let pdfFont = 'helvetica';
-                    if (fontFamily.includes('serif') && !fontFamily.includes('sans')) pdfFont = 'times';
-                    if (fontFamily.includes('mono')) pdfFont = 'courier';
-                    
-                    let pdfType = 'normal';
-                    if (fontWeight === 'bold' || parseInt(fontWeight) >= 600) pdfType = 'bold';
-                    
-                    doc.setFont(pdfFont, pdfType);
-                    doc.setFontSize(fontSize);
-                    
-                    // Alignment Logic (X Coordinate)
-                    let textX = x;
-                    let pdfAlign = 'left';
-                    
-                    if (align === 'center') {
-                        textX = x + (w / 2);
-                        pdfAlign = 'center';
-                    } else if (align === 'right') {
-                        textX = x + w;
-                        pdfAlign = 'right';
-                    }
-                    
-                    // Text Wrapping & Vertical Alignment (Y Coordinate)
-                    const lines = doc.splitTextToSize(text, w);
-                    const lineHeight = fontSize * 1.15; // approximate line height
-                    const blockHeight = lines.length * lineHeight;
-                    
-                    let textY = y;
-                    
-                    // Adjust Y based on vertical alignment
-                    if (vAlign === 'center') {
-                        textY = y + (h - blockHeight) / 2;
-                        if (textY < y) textY = y; // Clamp top
-                    } else if (vAlign === 'flex-end') {
-                        textY = y + h - blockHeight;
-                    }
-                    
-                    // Render Text
-                    doc.text(lines, textX, textY, {
-                        align: pdfAlign,
-                        baseline: 'top',
-                        lineHeightFactor: 1.15
-                    });
-                });
-            }
-            
-            return doc;
-        }
-
-        async function downloadAsPDF() {
-            if (!certificatesGenerated) {
-                showStatus('Sila jana preview sijil dahulu!', 'error');
-                return;
-            }
-            
-            showStatus('⏳ Sedang menjana PDF (Teks Boleh Edit)...', 'info');
-            await new Promise(r => setTimeout(r, 100));
-            
-            try {
-                const doc = await createPDFDocument();
-                if (doc) {
-                    doc.save('Sijil-Pukal-Pro-Editable.pdf');
-                    showStatus('✅ PDF berjaya dimuat turun (Boleh Edit)!', 'success');
-                }
-            } catch (error) {
-                console.error(error);
-                showStatus('Ralat: ' + error.message, 'error');
-            }
-        }
-
-        // Cikgu AI: Fungsi Baru - Download PDF (Flattened/Image Based)
-        async function downloadAsFixedPDF() {
-            if (!certificatesGenerated) {
-                showStatus('Sila jana preview sijil dahulu!', 'error');
-                return;
-            }
-            
-            showStatus('⏳ Sedang memproses PDF (Gambar)... Sila tunggu.', 'info');
-            // Allow UI to update
-            await new Promise(r => setTimeout(r, 100));
-            
-            try {
-                const { jsPDF } = window.jspdf;
-                const previews = document.querySelectorAll('.certificate-preview');
-                if (previews.length === 0) return;
-
-                const first = previews[0];
-                const w = first.offsetWidth;
-                const h = first.offsetHeight;
-                const orientation = w > h ? 'l' : 'p';
-
-                const doc = new jsPDF({
-                    orientation: orientation,
-                    unit: 'px',
-                    format: [w, h],
-                    compress: true
-                });
-
-                for (let i = 0; i < previews.length; i++) {
-                    if (i > 0) doc.addPage([w, h], orientation);
-                    
-                    // Use html2canvas to snapshot the DOM element
-                    const canvas = await html2canvas(previews[i], {
-                        scale: 2, // Better quality
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: null // Transparent background if any
-                    });
-                    
-                    const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG compression
-                    doc.addImage(imgData, 'JPEG', 0, 0, w, h);
-                    
-                    // Optional: Update status for long lists
-                    if (i % 5 === 0) showStatus(`⏳ Memproses halaman ${i+1}/${previews.length}...`, 'info');
-                }
-
-                doc.save('Sijil-Pukal-Fixed.pdf');
-                showStatus('✅ PDF (Gambar) berjaya dimuat turun!', 'success');
-            } catch (error) {
-                console.error(error);
-                showStatus('Ralat: ' + error.message, 'error');
-            }
-        }
-
-        // Cikgu AI: Fungsi Share ke Media Sosial (Updated to use Editable PDF)
-        async function shareCertificates() {
-            if (!certificatesGenerated) {
-                showStatus('Sila jana preview dahulu!', 'error');
-                return;
-            }
-
-            if (!navigator.share) {
-                showStatus('Pelayar anda tidak menyokong fungsi perkongsian web.', 'error');
-                return;
-            }
-
-            try {
-                showStatus('⏳ Sedang menjana fail untuk dikongsi...', 'info');
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                const doc = await createPDFDocument();
-                
-                if (doc) {
-                    const pdfBlob = doc.output('blob');
-                    const file = new File([pdfBlob], "Sijil-Pukal.pdf", { type: "application/pdf" });
-
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Sijil Pukal Pro',
-                            text: 'Berikut adalah fail sijil yang telah dijana (Boleh Edit).'
-                        });
-                        showStatus('✅ Berjaya dikongsi!', 'success');
-                    } else {
-                        showStatus('Perkongsian fail tidak disokong pada peranti ini.', 'error');
-                    }
-                }
-            } catch (err) {
-                console.error(err);
-                showStatus('Ralat perkongsian: ' + err.message, 'error');
-            }
-        }
-
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        function clearAll() {
-            document.getElementById('templateUpload').value = '';
-            document.getElementById('excelUpload').value = '';
-            document.getElementById('gSheetUrl').value = '';
-            
-            document.getElementById('certificateTemplate').src = '';
-            document.getElementById('certificateTemplate').style.display = 'none';
-            document.getElementById('templatePreviewContainer').classList.add('hidden');
-            document.getElementById('excelStatus').classList.add('hidden');
-            document.getElementById('excelStatus').innerHTML = '';
-            document.getElementById('mappingSection').classList.add('hidden');
-            document.getElementById('headersContainer').innerHTML = '';
-            document.getElementById('previewContainer').innerHTML = '';
-            document.getElementById('previewCard').classList.add('hidden');
-            document.getElementById('styleEditor').classList.add('hidden');
-            
-            templateDataURL = null;
-            excelData = null;
-            headers = [];
-            dropZones = [];
-            certificatesGenerated = false;
-            selectedDropZone = null;
-            
-            resetMapping();
-            showStatus('Semua telah dikosongkan!', 'info');
-        }
-
-        function showStatus(message, type) {
-            let statusDiv = document.getElementById('globalStatus');
-            if (!statusDiv) {
-                statusDiv = document.createElement('div');
-                statusDiv.id = 'globalStatus';
-                statusDiv.style.position = 'fixed';
-                statusDiv.style.top = '20px';
-                statusDiv.style.right = '20px';
-                statusDiv.style.zIndex = '1000';
-                document.body.appendChild(statusDiv);
-            }
-            
-            statusDiv.className = `status-message status-${type}`;
-            statusDiv.textContent = message;
-            statusDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        function setupDragDrop(elementId, callback) {
-            const element = document.getElementById(elementId);
-            
-            element.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                element.style.borderColor = '#10b981';
-                element.style.backgroundColor = '#f0fdf4';
-            });
-            
-            element.addEventListener('dragleave', function() {
-                element.style.borderColor = '#3367d6';
-                element.style.backgroundColor = '';
-            });
-            
-            element.addEventListener('drop', function(e) {
-                e.preventDefault();
-                element.style.borderColor = '#3367d6';
-                element.style.backgroundColor = '';
-                
-                if (e.dataTransfer.files.length > 0) {
-                    const event = { dataTransfer: e.dataTransfer };
-                    callback(event);
-                }
-            });
-        }
-
-        function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registered:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed:', error);
-                    });
-            }
-        }
-    </script>
-</body>
+    function resetProject() {
+      if(confirm('Adakah anda pasti untuk reset semua tetapan projek ini?')) {
+        location.reload();
+      }
+    }
+  </script>
+ </body>
 </html>
