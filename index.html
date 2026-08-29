@@ -224,7 +224,7 @@
     .certificate-canvas {
       position: relative;
       display: inline-block;
-      transform-origin: top left;
+      transform-origin: center center;
     }
     
     .certificate-image {
@@ -966,7 +966,7 @@
        <div class="glass-card p-6"><!-- Toggle Background Display -->
         <div class="mb-4 flex items-center justify-between p-3 bg-purple-500/10 rounded-lg border border-purple-500/30"><label class="flex items-center gap-3 cursor-pointer"> <input type="checkbox" id="showBackgroundToggle" checked class="w-4 h-4 accent-purple-500"> <span class="text-white text-sm">Tunjuk gambar latar belakang (Untick untuk latar putih)</span> </label> <span class="text-gray-400 text-xs">PDF: <span id="pdfBgStatus">Ada latar</span></span>
         </div>
-        <div class="preview-container overflow-hidden scrollbar-custom relative" style="height: 700px;" id="previewContainer">
+        <div class="preview-container overflow-hidden scrollbar-custom relative" style="height: 620px; transition: height .25s ease;" id="previewContainer">
          <div id="emptyPreview" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center py-20 text-center w-full">
           <svg class="w-24 h-24 text-blue-500/30 mb-4 mx-auto" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
@@ -975,7 +975,7 @@
          </div>
          <div id="certificateMover" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); cursor: grab; display: none; z-index: 10;">
           <div id="certificateFloater" style="transform-style: preserve-3d;">
-           <div id="certificateCanvas" class="certificate-canvas" style="position: relative; display: inline-block; max-width: none; transform-origin: top left;"><img id="certificateImage" class="certificate-image" src="" alt="Certificate Template" style="display: block; max-width: none; height: auto;"> <!-- Text fields will be added here dynamically -->
+           <div id="certificateCanvas" class="certificate-canvas" style="position: relative; display: inline-block; max-width: none; transform-origin: center center;"><img id="certificateImage" class="certificate-image" src="" alt="Certificate Template" style="display: block; max-width: none; height: auto;"> <!-- Text fields will be added here dynamically -->
            </div>
           </div>
          </div>
@@ -1410,6 +1410,11 @@
           }
         });
         
+        window.__resetPan = function () {
+          currentX = 0; currentY = 0;
+          mover.style.transform = 'translate(-50%, -50%)';
+        };
+
         window.addEventListener('mouseup', () => {
           if (isPanning) {
             isPanning = false;
@@ -1643,7 +1648,11 @@
       const emptyPreview = document.getElementById('emptyPreview');
       const mover = document.getElementById('certificateMover');
       
+      img.onload = function () {
+        fitCertificateToView();
+      };
       img.src = appState.certificateImage;
+      if (img.complete && img.naturalWidth) fitCertificateToView();
       if (mover) mover.style.display = 'block';
       if (emptyPreview) emptyPreview.style.display = 'none';
       
@@ -1678,14 +1687,48 @@
     }
     
     function adjustZoom(delta) {
-      appState.zoom = Math.max(0.3, Math.min(2, appState.zoom + delta));
+      appState.zoom = Math.max(0.05, Math.min(3, appState.zoom + delta));
       updateCanvasScale();
     }
     
     function resetZoom() {
-      appState.zoom = 1;
+      fitCertificateToView();
+    }
+
+    // Sesuaikan paparan mengikut orientasi & saiz sebenar sijil (melintang / menegak)
+    function fitCertificateToView() {
+      const container = document.getElementById('previewContainer');
+      const img = document.getElementById('certificateImage');
+      const canvas = document.getElementById('certificateCanvas');
+      if (!container || !img || !img.naturalWidth) return;
+
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      const ratio = h / w;
+
+      // Tinggi bekas ikut nisbah gambar (melintang = pendek, menegak = tinggi)
+      const cw = container.clientWidth || 800;
+      let targetH = Math.round((cw - 48) * ratio) + 48;
+      targetH = Math.max(360, Math.min(820, targetH));
+      container.style.height = targetH + 'px';
+
+      // Kekalkan saiz asal gambar pada kanvas, kemudian skala supaya muat penuh
+      canvas.style.width = w + 'px';
+      img.style.width = w + 'px';
+      img.style.height = h + 'px';
+
+      const availW = container.clientWidth - 32;
+      const availH = targetH - 32;
+      const scale = Math.min(availW / w, availH / h);
+
+      appState.zoom = Math.max(0.05, scale);
+      if (typeof window.__resetPan === 'function') window.__resetPan();
       updateCanvasScale();
     }
+
+    window.addEventListener('resize', () => {
+      if (appState.certificateImage) fitCertificateToView();
+    });
     
     // ==================== FIELD MANAGEMENT ====================
     function addNewField() {
