@@ -1470,7 +1470,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           <input id="eraserColor" type="color" class="color-input" value="#ffffff" onchange="setEraserColor(this.value)">
           <button type="button" class="btn-3d px-3 py-2 text-sm" onclick="eraserUndo()">↩️ Undo</button>
           <button type="button" class="btn-3d px-3 py-2 text-sm" onclick="eraserResetImage()">🔄 Asal</button>
-          <span class="text-slate-500 text-xs">Padam nama pada sijil untuk jadikan ia kosong.</span>
+          <span class="text-slate-500 text-xs">Padam nama pada sijil untuk jadikan ia kosong. Skrol tetikus = zoom, Alt/Space + seret = gerak paparan.</span>
          </div>
         </div>
         <div class="preview-container overflow-hidden scrollbar-custom relative" style="height: 620px; transition: height .25s ease;" id="previewContainer">
@@ -1900,8 +1900,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       let currentX = 0, currentY = 0;
 
       if (mover) {
+        window.__panBy = function (dx, dy) {
+          currentX += dx; currentY += dy;
+          mover.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+        };
         mover.addEventListener('mousedown', (e) => {
-          if (window.__eraserActive) return;
+          const panOverride = e.altKey || e.button === 1 || window.__spaceHeld;
+          if (window.__eraserActive && !panOverride) return;
           if (e.target.closest('.text-field')) return; // let fields handle their own drag
           isPanning = true;
           startX = e.clientX - currentX;
@@ -2195,7 +2200,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     }
     
     function adjustZoom(delta) {
-      appState.zoom = Math.max(0.05, Math.min(3, appState.zoom + delta));
+      appState.zoom = Math.max(0.05, Math.min(8, appState.zoom + delta));
       updateCanvasScale();
     }
     
@@ -3395,7 +3400,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         }
         Object.assign(c.style, {
           position: 'absolute', left: '0', top: '0', width: '100%', height: '100%',
-          zIndex: '40', touchAction: 'none', cursor: 'crosshair',
+          zIndex: '40', touchAction: 'none', cursor: 'none',
           display: ES.active ? 'block' : 'none'
         });
         return c;
@@ -3494,6 +3499,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       function bind(c) {
         c.addEventListener('pointerdown', (e) => {
           if (!ES.active) return;
+          if (e.altKey || e.button === 1 || window.__spaceHeld) return; // biar pan berlaku
           e.preventDefault();
           e.stopPropagation();
           const p = toCanvasPoint(c, e);
@@ -3506,11 +3512,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           stroke(c, p.x + 0.01, p.y + 0.01);
         });
         c.addEventListener('pointermove', (e) => {
-          if (!ES.active || !ES.drawing) return;
+          if (!ES.active) return;
+          ringUpdate(c, e);
+          if (!ES.drawing) return;
           e.preventDefault();
           const p = toCanvasPoint(c, e);
           stroke(c, p.x, p.y);
         });
+        c.addEventListener('pointerenter', (e) => { if (ES.active) ringUpdate(c, e); });
+        c.addEventListener('pointerleave', () => ringHide());
         const end = (e) => {
           if (!ES.drawing) return;
           ES.drawing = false;
@@ -3522,6 +3532,80 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         c.addEventListener('pointerleave', end);
       }
 
+      // ---- Relang bulatan (brush ring) mengikut saiz mata pemadam ----
+      function ring() {
+        let r = document.getElementById('eraserRing');
+        if (!r) {
+          r = document.createElement('div');
+          r.id = 'eraserRing';
+          Object.assign(r.style, {
+            position: 'fixed', left: '0', top: '0', width: '0', height: '0',
+            border: '1.5px solid rgba(15,23,42,.9)', outline: '1.5px solid rgba(255,255,255,.9)',
+            borderRadius: '9999px', pointerEvents: 'none', zIndex: '9999',
+            transform: 'translate(-50%,-50%)', display: 'none',
+            boxShadow: '0 0 0 1px rgba(255,255,255,.35) inset'
+          });
+          document.body.appendChild(r);
+        }
+        return r;
+      }
+
+      function ringUpdate(c, e) {
+        const r = ring();
+        const rect = c.getBoundingClientRect();
+        const scale = rect.width / c.width;          // px skrin per px kanvas
+        const d = Math.max(4, ES.size * scale);
+        r.style.width = d + 'px';
+        r.style.height = d + 'px';
+        r.style.left = e.clientX + 'px';
+        r.style.top = e.clientY + 'px';
+        r.style.display = ES.active ? 'block' : 'none';
+      }
+
+      function ringHide() { ring().style.display = 'none'; }
+      window.__eraserRingHide = ringHide;
+
+      // ---- Zoom tetikus (wheel) berpusat pada kursor ----
+      function initWheelZoom() {
+        const cont = document.getElementById('previewContainer');
+        if (!cont || cont.__wheelZoom) return;
+        cont.__wheelZoom = true;
+        cont.addEventListener('wheel', (e) => {
+          if (!appState.certificateImage) return;
+          e.preventDefault();
+          const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+          const prev = appState.zoom;
+          const next = Math.max(0.05, Math.min(8, prev * Math.exp(-dy * 0.0015)));
+          if (next === prev) return;
+          const k = next / prev;
+          const holder = document.getElementById('certificateCanvas');
+          if (holder && window.__panBy) {
+            const b = holder.getBoundingClientRect();
+            const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+            const px = e.clientX - cx, py = e.clientY - cy;
+            window.__panBy(px * (1 - k), py * (1 - k));
+          }
+          appState.zoom = next;
+          updateCanvasScale();
+          const c = document.getElementById('eraserCanvas');
+          if (c && ES.active) ringUpdate(c, e);
+        }, { passive: false });
+      }
+      document.addEventListener('DOMContentLoaded', initWheelZoom);
+      if (document.readyState !== 'loading') initWheelZoom();
+
+      // Space = mod pan sementara (walaupun pemadam aktif)
+      window.__spaceHeld = false;
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !/input|textarea|select/i.test((e.target.tagName || ''))) {
+          window.__spaceHeld = true;
+          if (ES.active) e.preventDefault();
+        }
+        if (ES.active && (e.key === '+' || e.key === '=')) { adjustZoom(0.25); }
+        if (ES.active && (e.key === '-' || e.key === '_')) { adjustZoom(-0.25); }
+      });
+      document.addEventListener('keyup', (e) => { if (e.code === 'Space') window.__spaceHeld = false; });
+
       window.toggleEraser = function () {
         if (!appState.certificateImage) { showToast('Sila muat naik sijil dahulu.', 'error'); return; }
         ES.active = !ES.active;
@@ -3529,6 +3613,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         const c = ensureCanvas(true);
         if (!c) { ES.active = false; window.__eraserActive = false; return; }
         c.style.display = ES.active ? 'block' : 'none';
+        if (!ES.active) ringHide();
         document.querySelectorAll('.text-field').forEach(f => {
           f.style.pointerEvents = ES.active ? 'none' : '';
           f.style.opacity = ES.active ? '0.35' : '';
@@ -3544,6 +3629,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       window.setEraserSize = function (v) {
         ES.size = parseInt(v, 10) || 1;
         const l = $('eraserSizeVal'); if (l) l.textContent = ES.size + 'px';
+        const c = $('eraserCanvas'), r = document.getElementById('eraserRing');
+        if (c && r && r.style.display === 'block') {
+          const rect = c.getBoundingClientRect();
+          const d = Math.max(4, ES.size * (rect.width / c.width));
+          r.style.width = d + 'px'; r.style.height = d + 'px';
+        }
       };
       window.setEraserSoft = function (v) { ES.soft = (parseInt(v, 10) || 0) / 100; };
       window.setEraserMode = function (v) { ES.mode = v; };
