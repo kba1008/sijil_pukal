@@ -1339,6 +1339,26 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 @media(max-width: 600px) { .mark-editor { grid-template-columns: minmax(0, 1fr); } .mark-preview { width: 100%; height: 100px; } }
 
 </style>
+<style>
+/* Editor-only alignment guides; certificate exports use a separate canvas. */
+:root { --guide-line: oklch(0.56 0.19 245); --guide-centered: oklch(0.49 0.13 160); --guide-surface: oklch(0.98 0.006 220); --guide-ink: oklch(0.3 0.04 220); --guide-border: oklch(0.84 0.025 220); }
+.guide-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 20px; margin-bottom:16px; padding:12px; border:1px solid var(--guide-border); border-radius:6px; background:var(--guide-surface); color:var(--guide-ink); font-size:13px; }
+.guide-toggle { display:flex; align-items:center; gap:8px; cursor:pointer; }
+.guide-toggle input { width:17px; height:17px; accent-color:var(--guide-line); }
+.guide-toggle input:focus-visible { outline:2px solid var(--guide-line); outline-offset:3px; }
+.guide-status { flex-basis:100%; display:flex; flex-wrap:wrap; gap:8px 16px; font-variant-numeric:tabular-nums; }
+.guide-status [data-centered=true] { color:var(--guide-centered); font-weight:700; }
+.guide-toolbar [hidden] { display:none; }
+.alignment-overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:50; overflow:hidden; }
+.alignment-overlay .guide-center { stroke:var(--guide-line); stroke-width:1.5; stroke-dasharray:7 5; vector-effect:non-scaling-stroke; }
+.alignment-overlay .guide-center.is-centered { stroke:var(--guide-centered); stroke-dasharray:none; }
+.alignment-overlay .ruler-bg { fill:var(--guide-surface); fill-opacity:.96; }
+.alignment-overlay .ruler-tick { stroke:var(--guide-border); stroke-width:1; vector-effect:non-scaling-stroke; }
+.alignment-overlay text { fill:var(--guide-ink); font-family:system-ui,sans-serif; }
+.alignment-overlay .ruler-marker { fill:var(--guide-line); }
+.alignment-overlay .ruler-marker.is-centered { fill:var(--guide-centered); }
+@media print { .alignment-overlay, .guide-toolbar { display:none !important; } }
+</style>
 </head>
  <body class="h-full" oncontextmenu="return false;">
   <div class="app-wrapper h-full"><!-- Floating Background -->
@@ -1505,7 +1525,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
  <button id="markReset" type="button" class="mark-button" title="Tetapan asal">↺ Asal</button>
  <button id="markRemove" type="button" class="mark-button mark-button-danger">✕ Padam</button>
  </div></div></div></section>
-        <div id="eraserBar" class="mb-4 p-3 rounded-xl" style="background:rgba(255,255,255,.75);border:1px solid rgba(148,163,184,.35);">
+        <div class="guide-toolbar" aria-label="Panduan kedudukan">
+<label class="guide-toggle"><input id="centerGuideToggle" type="checkbox" checked> Garis tengah</label>
+<label class="guide-toggle"><input id="rulerGuideToggle" type="checkbox" checked> Pembaris (%)</label>
+<div id="guideStatus" class="guide-status" role="status" aria-live="polite" aria-atomic="true"></div>
+</div>
+<div id="eraserBar" class="mb-4 p-3 rounded-xl" style="background:rgba(255,255,255,.75);border:1px solid rgba(148,163,184,.35);">
          <div class="flex flex-wrap items-center gap-3">
           <button id="eraserToggleBtn" type="button" class="btn-3d px-3 py-2 text-sm" onclick="toggleEraser()">🧽 Pemadam Pintar: OFF</button>
           <div class="flex items-center gap-2"><span class="text-slate-600 text-xs font-medium whitespace-nowrap">Saiz mata pen</span>
@@ -1632,6 +1657,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
          </div>
          <div><label class="block text-gray-400 text-sm mb-2">Font Weight</label> <select id="fieldFontWeight" class="select-3d" onchange="updateSelectedField()"> <option value="300">Light (300)</option> <option value="400">Regular (400)</option> <option value="500">Medium (500)</option> <option value="600">Semi Bold (600)</option> <option value="700" selected>Bold (700)</option> </select>
          </div>
+         <div><label class="guide-toggle" for="fieldItalic"><input id="fieldItalic" type="checkbox" onchange="updateSelectedField()"> <span><i>Italic</i></span></label></div>
          <div><label class="block text-gray-400 text-sm mb-2">Text Align</label> <select id="fieldTextAlign" class="select-3d" onchange="updateSelectedField()"> <option value="left">Kiri</option> <option value="center" selected>Tengah</option> <option value="right">Kanan</option> </select>
          </div>
          <div><label class="block text-gray-400 text-sm mb-2">Vertical Align</label> <select id="fieldTextBaseline" class="select-3d" onchange="updateSelectedField()"> <option value="top">Atas</option> <option value="middle" selected>Tengah</option> <option value="bottom">Bawah</option> </select>
@@ -2310,6 +2336,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         font: 'Arial',
         fontSize: 60,
         fontWeight: '700',
+        fontStyle: 'normal',
         color: '#000000',
         textAlign: 'center',
         textBaseline: 'middle',
@@ -2346,6 +2373,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       const textEl = fieldEl.querySelector('.field-text');
       textEl.style.fontFamily = `'${field.font}', sans-serif`;
       textEl.style.fontWeight = field.fontWeight;
+      textEl.style.fontStyle = field.fontStyle === 'italic' ? 'italic' : 'normal';
       textEl.style.color = field.color;
       textEl.style.textAlign = field.textAlign;
       textEl.style.width = '100%';
@@ -2419,6 +2447,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       document.getElementById('fieldFont').value = field.font;
       document.getElementById('fieldFontSize').value = field.fontSize || 60;
       document.getElementById('fieldFontWeight').value = field.fontWeight;
+      document.getElementById('fieldItalic').checked = field.fontStyle === 'italic';
       document.getElementById('fieldColor').value = field.color;
       document.getElementById('fieldColorText').value = field.color;
       document.getElementById('fieldTextAlign').value = field.textAlign;
@@ -2439,6 +2468,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       field.font = document.getElementById('fieldFont').value;
       field.fontSize = parseInt(document.getElementById('fieldFontSize').value) || 60;
       field.fontWeight = document.getElementById('fieldFontWeight').value;
+      field.fontStyle = document.getElementById('fieldItalic').checked ? 'italic' : 'normal';
       field.color = document.getElementById('fieldColor').value;
       field.textAlign = document.getElementById('fieldTextAlign').value;
       field.textBaseline = document.getElementById('fieldTextBaseline').value;
@@ -2983,7 +3013,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         let y = (field.y / 100) * cvs.height;
         let w = (field.width / 100) * cvs.width;
         
-        ctx.font = `${field.fontWeight} ${fontSize}px '${field.font}'`;
+        ctx.font = `${field.fontStyle === 'italic' ? 'italic' : 'normal'} ${field.fontWeight} ${fontSize}px '${field.font}'`;
         ctx.fillStyle = field.color;
         ctx.textAlign = field.textAlign;
         
@@ -3182,7 +3212,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
             
             pdf.setFontSize(fontSizePt);
             
-            let fontStyle = (field.fontWeight === 'bold' || field.fontWeight === '700') ? 'bold' : 'normal';
+            const isBold = field.fontWeight === 'bold' || field.fontWeight === '700';
+            const isItalic = field.fontStyle === 'italic';
+            let fontStyle = isBold ? (isItalic ? 'bolditalic' : 'bold') : (isItalic ? 'italic' : 'normal');
             let fontName = 'helvetica';
             let fNameLower = (field.font || '').toLowerCase();
             if (fNameLower.includes('times') || fNameLower.includes('merriweather') || fNameLower.includes('playfair') || fNameLower.includes('lora') || fNameLower.includes('baskerville')) fontName = 'times';
@@ -3941,6 +3973,105 @@ document.addEventListener('DOMContentLoaded', () => {
   const originalDisplay = displayCertificate;
   displayCertificate = function () { originalDisplay.apply(this, arguments); renderDigitalMarks(); syncMarkControls(); };
 });
+
+
+// Alignment coordinates use the same 0–100% origin as field and mark controls.
+const alignmentGuides = { center: true, ruler: true };
+function refreshAlignmentGuides() {
+  const holder = document.getElementById('certificateCanvas');
+  const image = document.getElementById('certificateImage');
+  const status = document.getElementById('guideStatus');
+  if (!holder || !image || !status) return;
+  let overlay = document.getElementById('alignmentOverlay');
+  if (!overlay) {
+    overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    overlay.id = 'alignmentOverlay'; overlay.classList.add('alignment-overlay');
+    overlay.setAttribute('aria-hidden', 'true'); holder.appendChild(overlay);
+  }
+  const active = alignmentGuides.center || alignmentGuides.ruler;
+  overlay.style.display = active && appState.certificateImage ? 'block' : 'none';
+  status.hidden = !active;
+  const field = appState.fields.find(item => item.id === appState.selectedFieldId);
+  const item = field || selectedMark();
+  const centeredX = item && Math.abs(item.x - 50) < 0.001;
+  const centeredY = item && Math.abs(item.y - 50) < 0.001;
+  const position = value => Number(value.toFixed(2)).toString();
+  const offset = (value, negative, positive) => Math.abs(value - 50) < 0.001 ? '✓ Tengah' : `${position(Math.abs(value - 50))}% ${value < 50 ? negative : positive} dari tengah`;
+  if (!appState.certificateImage) status.textContent = 'Belum ada sijil';
+  else if (!item) status.textContent = 'Tengah sijil: X 50% · Y 50%';
+  else {
+    const label = field ? (field.dataSource || 'Medan teks') : item.name;
+    status.replaceChildren();
+    const name = document.createElement('span'); name.textContent = label; status.appendChild(name);
+    for (const [axis, value, centered, negative, positive] of [['X',item.x,centeredX,'kiri','kanan'],['Y',item.y,centeredY,'atas','bawah']]) {
+      const text = document.createElement('span'); text.dataset.centered = String(Boolean(centered));
+      text.textContent = `${axis}: ${position(value)}% · ${offset(value,negative,positive)}`; status.appendChild(text);
+    }
+  }
+  if (!active || !appState.certificateImage || !image.naturalWidth) return;
+  const w = image.offsetWidth || image.naturalWidth, h = image.offsetHeight || image.naturalHeight;
+  const zoom = Math.max(0.05, appState.zoom || 1), band = 24 / zoom, font = 10 / zoom;
+  overlay.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  let shapes = '';
+  if (alignmentGuides.center) {
+    shapes += `<line class="guide-center ${centeredX ? 'is-centered' : ''}" x1="${w/2}" y1="0" x2="${w/2}" y2="${h}"/>`;
+    shapes += `<line class="guide-center ${centeredY ? 'is-centered' : ''}" x1="0" y1="${h/2}" x2="${w}" y2="${h/2}"/>`;
+  }
+  if (alignmentGuides.ruler) {
+    shapes += `<rect class="ruler-bg" width="${w}" height="${band}"/><rect class="ruler-bg" width="${band}" height="${h}"/>`;
+    for (const [horizontal,size] of [[true,w],[false,h]]) {
+      const step = size * zoom < 400 ? 20 : 10;
+      for (let p = 0; p <= 100; p += step / 2) {
+        const coord = size * p / 100;
+        const major = p % step === 0;
+        const start = band - (major ? 7 : 4) / zoom;
+        shapes += horizontal ? `<line class="ruler-tick" x1="${coord}" y1="${start}" x2="${coord}" y2="${band}"/>` : `<line class="ruler-tick" x1="${start}" y1="${coord}" x2="${band}" y2="${coord}"/>`;
+        if (major && p > 0) {
+          const inset = 2/zoom, anchor = p === 100 ? 'end' : 'middle';
+          shapes += horizontal ? `<text x="${coord-(p===100 ? inset : 0)}" y="${12/zoom}" text-anchor="${anchor}" font-size="${font}">${p}</text>` : `<text transform="translate(${12/zoom} ${coord-(p===100 ? inset : 0)}) rotate(-90)" text-anchor="${anchor}" font-size="${font}">${p}</text>`;
+        }
+      }
+    }
+    shapes += `<text x="${3/zoom}" y="${12/zoom}" font-size="${font}">%</text>`;
+    if (item) {
+      const x = w*item.x/100, y = h*item.y/100, half = 4/zoom;
+      shapes += `<path class="ruler-marker ${centeredX ? 'is-centered' : ''}" d="M ${x-half} ${band-6/zoom} L ${x+half} ${band-6/zoom} L ${x} ${band} Z"/>`;
+      shapes += `<path class="ruler-marker ${centeredY ? 'is-centered' : ''}" d="M ${band-6/zoom} ${y-half} L ${band-6/zoom} ${y+half} L ${band} ${y} Z"/>`;
+    }
+  }
+  overlay.innerHTML = shapes;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  for (const [id,key] of [['centerGuideToggle','center'],['rulerGuideToggle','ruler']]) {
+    document.getElementById(id).addEventListener('change', event => {
+      alignmentGuides[key] = event.target.checked; refreshAlignmentGuides();
+    });
+  }
+  // Wrap existing editing hooks without changing their behaviour or export path.
+  const scale = updateCanvasScale;
+  updateCanvasScale = function () { const result = scale.apply(this, arguments); refreshAlignmentGuides(); return result; };
+  const select = selectField;
+  selectField = function () { digitalMarks.selectedId = null; document.querySelectorAll('.digital-mark').forEach(el => el.classList.remove('selected')); const result = select.apply(this, arguments); refreshAlignmentGuides(); return result; };
+  const drag = onDrag;
+  onDrag = function () { const result = drag.apply(this, arguments); refreshAlignmentGuides(); return result; };
+  const start = startDrag;
+  startDrag = function (event, id) { selectField(id); return start.apply(this, arguments); };
+  const remove = deleteSelectedField;
+  deleteSelectedField = function () { const result = remove.apply(this, arguments); refreshAlignmentGuides(); return result; };
+  const marks = renderDigitalMarks;
+  renderDigitalMarks = function () {
+    if (selectedMark()) { appState.selectedFieldId = null; document.querySelectorAll('.text-field').forEach(el => el.classList.remove('selected')); document.getElementById('fieldEditor').style.display = 'none'; }
+    const result = marks.apply(this, arguments); refreshAlignmentGuides(); return result;
+  };
+  const sync = syncMarkControls;
+  syncMarkControls = function () { const result = sync.apply(this, arguments); refreshAlignmentGuides(); return result; };
+  imageGuideObserver();
+  refreshAlignmentGuides();
+});
+function imageGuideObserver() {
+  const image = document.getElementById('certificateImage');
+  image.addEventListener('load', refreshAlignmentGuides);
+}
 
 </script>
  </body>
