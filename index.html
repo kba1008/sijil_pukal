@@ -3268,7 +3268,9 @@ input[type=color] { min-width:52px; min-height:48px; }
           
           appState.fields.forEach(field => {
             const colIndex = appState.headers.indexOf(field.dataSource);
-            const text = colIndex !== -1 ? String(appState.excelData[idx][colIndex] || '') : '';
+            const row = appState.excelData[idx] || [];
+            const cell = colIndex !== -1 ? row[colIndex] : '';
+            const text = (cell === undefined || cell === null) ? '' : String(cell).trim();
             if (!text) return;
             
             let x = (field.x / 100) * pdfWidth;
@@ -3298,7 +3300,8 @@ input[type=color] { min-width:52px; min-height:48px; }
             let bColor = parseInt(hex.substring(5,7), 16) || 0;
             pdf.setTextColor(rColor, gColor, bColor);
             
-            let lines = pdf.splitTextToSize(text, w);
+            let lines = pdf.splitTextToSize(text, Math.max(w, 1));
+            if (!Array.isArray(lines) || !lines.length) lines = [text];
             let lineHeightPt = fontSizePt * 1.2;
             let lineHeightMm = lineHeightPt * (25.4 / 72);
             let totalTextHeightMm = lines.length * lineHeightMm;
@@ -3327,6 +3330,10 @@ input[type=color] { min-width:52px; min-height:48px; }
           });
           drawDigitalMarksOnPDF(pdf, pdfWidth, pdfHeight);
         };
+        
+        // Buang indeks peserta yang tidak wujud lagi (cth. selepas Excel dimuat naik semula)
+        rowsToProcess = rowsToProcess.filter(r => Array.isArray(appState.excelData[r.idx]));
+        if (!rowsToProcess.length) throw new Error('Tiada data peserta yang sah. Sila muat naik semula fail Excel atau pilih kumpulan semula.');
         
         if (mode === 'single') {
           // Single PDF with all certificates
@@ -3998,6 +4005,7 @@ async function uploadDigitalMark(file) {
 }
 function drawDigitalMarksOnPDF(pdf, pdfWidth, pdfHeight) {
   digitalMarks.items.forEach(item => {
+    if (!item || !item.png) return;
     const bounds = signatureBounds(item, appState.certificateWidth, appState.certificateHeight);
     const sx = pdfWidth / appState.certificateWidth, sy = pdfHeight / appState.certificateHeight;
     pdf.addImage(item.png, 'PNG', bounds.x * sx, bounds.y * sy, bounds.width * sx, bounds.height * sy);
