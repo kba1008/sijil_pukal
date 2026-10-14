@@ -3253,10 +3253,24 @@ input[type=color] { min-width:52px; min-height:48px; }
         bgCtx.drawImage(img, 0, 0);
         const bgDataUrl = bgCanvas.toDataURL('image/jpeg', 0.92);
         
-        // Determine PDF orientation
-        const orientation = img.width > img.height ? 'l' : 'p';
-        const pdfWidth = orientation === 'l' ? 297 : 210;
-        const pdfHeight = orientation === 'l' ? 210 : 297;
+        // Kekalkan nisbah asal; jangan regangkan sijil kepada saiz A4.
+        // Imej tidak semestinya mempunyai ukuran cetakan: gunakan 96 DPI
+        // untuk menukar piksel kepada mm dengan skala seragam pada kedua-dua paksi.
+        const sourceWidth = img.naturalWidth || img.width;
+        const sourceHeight = img.naturalHeight || img.height;
+        if (!(sourceWidth > 0 && sourceHeight > 0)) {
+          throw new Error('Saiz gambar sijil tidak sah. Sila muat naik semula gambar.');
+        }
+        const orientation = sourceWidth > sourceHeight ? 'l' : 'p';
+        // Had halaman PDF ialah 14,400 pt (5,080 mm). Skala seragam
+        // bagi imej luar biasa besar supaya nisbahnya tetap tidak berubah.
+        const mmPerPixel = Math.min(25.4 / 96, 5080 / Math.max(sourceWidth, sourceHeight));
+        const pdfWidth = sourceWidth * mmPerPixel;
+        const pdfHeight = sourceHeight * mmPerPixel;
+        const pdfFormat = [pdfWidth, pdfHeight];
+        const createCertificatePDF = () => new jsPDF({
+          orientation, unit: 'mm', format: pdfFormat, compress: true
+        });
         
         const drawCertificateToPDF = (pdf, idx) => {
           if (appState.showBackground) {
@@ -3337,12 +3351,12 @@ input[type=color] { min-width:52px; min-height:48px; }
         
         if (mode === 'single') {
           // Single PDF with all certificates
-          const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+          const pdf = createCertificatePDF();
           
           for (let i = 0; i < rowsToProcess.length; i++) {
             const { idx } = rowsToProcess[i];
             
-            if (i > 0) pdf.addPage();
+            if (i > 0) pdf.addPage(pdfFormat, orientation);
             
             drawCertificateToPDF(pdf, idx);
             
@@ -3372,12 +3386,12 @@ input[type=color] { min-width:52px; min-height:48px; }
           
           for (const groupName of groups) {
             const indices = groupedRows[groupName];
-            const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+            const pdf = createCertificatePDF();
             
             for (let i = 0; i < indices.length; i++) {
               const idx = indices[i];
               
-              if (i > 0) pdf.addPage();
+              if (i > 0) pdf.addPage(pdfFormat, orientation);
               
               drawCertificateToPDF(pdf, idx);
               
@@ -3401,7 +3415,7 @@ input[type=color] { min-width:52px; min-height:48px; }
           // Individual PDF per certificate
           for (let i = 0; i < rowsToProcess.length; i++) {
             const { idx } = rowsToProcess[i];
-            const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+            const pdf = createCertificatePDF();
             
             let fileName = `sijil_${i + 1}`;
             
