@@ -4074,5 +4074,104 @@ function imageGuideObserver() {
 }
 
 </script>
- </body>
+ 
+<script>
+// ==================== AUTO-SIMPAN (localStorage) ====================
+(function () {
+  const KEY = 'sijilGeneratorPro_state_v1';
+  let quotaWarned = false;
+
+  function saveState() {
+    try {
+      const data = {
+        certificateImage: appState.certificateImage,
+        certificateWidth: appState.certificateWidth,
+        certificateHeight: appState.certificateHeight,
+        excelData: appState.excelData,
+        headers: appState.headers,
+        fields: appState.fields,
+        zoom: appState.zoom,
+        groups: appState.groups,
+        groupColumns: appState.groupColumns,
+        selectedGroups: Array.from(appState.selectedGroups || []),
+        savePath: appState.savePath,
+        showBackground: appState.showBackground,
+        fileNameColumns: appState.fileNameColumns
+      };
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch (err) {
+      if (!quotaWarned) {
+        quotaWarned = true;
+        try { showToast('Storan penuh — auto-simpan tidak dapat disimpan.', 'error'); } catch (e) {}
+      }
+    }
+  }
+
+  function loadState() {
+    let data;
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      data = JSON.parse(raw);
+    } catch (err) { return; }
+    if (!data || (!data.certificateImage && !data.fields?.length && !data.excelData?.length)) return;
+
+    try {
+      appState.certificateImage = data.certificateImage || null;
+      appState.certificateWidth = data.certificateWidth || 0;
+      appState.certificateHeight = data.certificateHeight || 0;
+      appState.excelData = data.excelData || [];
+      appState.headers = data.headers || [];
+      appState.fields = data.fields || [];
+      appState.zoom = data.zoom || 1;
+      appState.groups = data.groups || {};
+      appState.groupColumns = data.groupColumns || [];
+      appState.selectedGroups = new Set(data.selectedGroups || []);
+      appState.savePath = data.savePath || appState.savePath;
+      appState.showBackground = data.showBackground !== false;
+      appState.fileNameColumns = data.fileNameColumns || [];
+
+      if (appState.certificateImage) {
+        document.getElementById('certificateFileName').textContent = 'Sijil disimpan (auto-simpan)';
+        document.getElementById('certificatePreviewSmall').classList.remove('hidden');
+        displayCertificate();
+        appState.fields.forEach(f => renderField(f));
+      }
+      if (appState.excelData.length) {
+        document.getElementById('totalRows').textContent = appState.excelData.length;
+        updateDataTable();
+        updateGroupColumnSelect();
+      }
+      const bgToggle = document.getElementById('showBackgroundToggle');
+      if (bgToggle) bgToggle.checked = appState.showBackground;
+      updateFieldsList();
+      renderFileNameCheckboxes();
+      updateFileNamePreview();
+      updateSteps();
+      updateGenerateReadiness();
+      updatePDFCount();
+      showToast('Projek terdahulu dipulihkan daripada auto-simpan.');
+    } catch (err) {
+      console.error('Gagal pulihkan auto-simpan:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadState);
+
+  // Simpan berkala + bila keluar/tukar tab
+  setInterval(saveState, 2000);
+  window.addEventListener('beforeunload', saveState);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+
+  // Reset: padam simpanan dahulu, kemudian reload
+  const originalReset = resetProject;
+  resetProject = function () {
+    if (confirm('Adakah anda pasti untuk reset semua tetapan projek ini? Semua simpanan auto akan dipadam.')) {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      location.reload();
+    }
+  };
+})();
+</script>
+</body>
 </html>
