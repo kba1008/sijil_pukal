@@ -1304,7 +1304,42 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </style>
   <style>body { box-sizing: border-box; }</style>
   
- </head>
+ <style>
+:root {
+  --mark-surface: oklch(0.99 0.005 160);
+  --mark-ink: oklch(0.28 0.04 220);
+  --mark-muted: oklch(0.49 0.035 220);
+  --mark-primary: oklch(0.52 0.12 165);
+  --mark-on-primary: oklch(1 0 0);
+  --mark-border: oklch(0.86 0.035 165);
+  --mark-grid: oklch(0.91 0.01 160);
+  --mark-danger: oklch(0.52 0.18 25);
+}
+.mark-panel { margin-bottom: 16px; padding: 16px; background: var(--mark-surface); color: var(--mark-ink); border: 1px solid var(--mark-border); border-radius: 8px; }
+.mark-title { margin: 0; font-size: 16px; font-weight: 700; }
+.mark-header, .mark-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mark-header { justify-content: space-between; }
+.mark-button { border: 1px solid var(--mark-border); border-radius: 6px; padding: 8px 12px; color: var(--mark-ink); background: var(--mark-surface); font: inherit; font-size: 13px; cursor: pointer; }
+.mark-button-primary { background: var(--mark-primary); color: var(--mark-on-primary); border-color: var(--mark-primary); }
+.mark-button-danger { color: var(--mark-danger); }
+.mark-button:focus-visible, .mark-panel input:focus-visible, .mark-panel select:focus-visible { outline: 2px solid var(--mark-primary); outline-offset: 3px; }
+.mark-button:disabled { opacity: .5; cursor: wait; }
+.mark-editor { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+.mark-preview { width: 150px; height: 112px; object-fit: contain; border: 1px solid var(--mark-border); border-radius: 6px; background-color: var(--mark-surface); background-image: conic-gradient(var(--mark-grid) 25%, transparent 0 50%, var(--mark-grid) 0 75%, transparent 0); background-size: 16px 16px; }
+.mark-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+.mark-control { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--mark-muted); }
+.mark-control input[type=range] { width: 100%; accent-color: var(--mark-primary); }
+.mark-control input[type=number], .mark-select { min-width: 0; width: 100%; background: var(--mark-surface); color: var(--mark-ink); border: 1px solid var(--mark-border); border-radius: 5px; padding: 6px; font: inherit; }
+.mark-select { margin-bottom: 10px; }
+.mark-actions { margin-top: 12px; }
+.digital-mark { position: absolute; transform: translate(-50%, -50%); cursor: move; touch-action: none; z-index: 30; }
+.digital-mark.selected { outline: 2px dashed var(--mark-primary); outline-offset: 4px; }
+.digital-mark img { width: 100%; height: auto; display: block; pointer-events: none; }
+.mark-panel [hidden] { display: none; }
+@media(max-width: 600px) { .mark-editor { grid-template-columns: minmax(0, 1fr); } .mark-preview { width: 100%; height: 100px; } }
+
+</style>
+</head>
  <body class="h-full" oncontextmenu="return false;">
   <div class="app-wrapper h-full"><!-- Floating Background -->
    <div class="floating-bg">
@@ -1452,6 +1487,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
        <div class="glass-card p-6"><!-- Toggle Background Display -->
         <div class="mb-4 flex items-center justify-between p-3 bg-purple-500/10 rounded-lg border border-purple-500/30"><label class="flex items-center gap-3 cursor-pointer"> <input type="checkbox" id="showBackgroundToggle" checked class="w-4 h-4 accent-purple-500"> <span class="text-white text-sm">Tunjuk gambar latar belakang (Untick untuk latar putih)</span> </label> <span class="text-gray-400 text-xs">PDF: <span id="pdfBgStatus">Ada latar</span></span>
         </div>
+<section class="mark-panel" aria-label="Tandatangan dan cop digital">
+ <div class="mark-header"><h3 class="mark-title">✍️ Tandatangan / Cop Digital</h3>
+ <button id="markUploadButton" type="button" class="mark-button mark-button-primary">＋ Muat naik gambar</button>
+ <input id="markInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden></div>
+ <div id="markEditor" class="mark-editor" hidden>
+ <img id="markPreview" class="mark-preview" alt="Tandatangan atau cop tanpa latar putih">
+ <div><select id="markSelect" class="mark-select" aria-label="Pilih tandatangan atau cop"></select>
+ <div class="mark-controls">
+ <label class="mark-control" for="markContrast">Kontras warna <output id="markContrastValue">100%</output><input id="markContrast" type="range" min="10" max="300" value="100"></label>
+ <label class="mark-control" for="markThreshold">Buang putih <output id="markThresholdValue">235</output><input id="markThreshold" type="range" min="180" max="255" value="235"></label>
+ <label class="mark-control" for="markSize">Saiz <output id="markSizeValue">22%</output><input id="markSize" type="range" min="1" max="95" step="0.1" value="22"></label>
+ <label class="mark-control" for="markX">Kedudukan X (%)<input id="markX" type="number" min="0" max="100" step="0.1" value="50"></label>
+ <label class="mark-control" for="markY">Kedudukan Y (%)<input id="markY" type="number" min="0" max="100" step="0.1" value="80"></label>
+ </div><div class="mark-actions">
+ <button id="markDownload" type="button" class="mark-button">↓ PNG lutsinar</button>
+ <button id="markReset" type="button" class="mark-button" title="Tetapan asal">↺ Asal</button>
+ <button id="markRemove" type="button" class="mark-button mark-button-danger">✕ Padam</button>
+ </div></div></div></section>
         <div id="eraserBar" class="mb-4 p-3 rounded-xl" style="background:rgba(255,255,255,.75);border:1px solid rgba(148,163,184,.35);">
          <div class="flex flex-wrap items-center gap-3">
           <button id="eraserToggleBtn" type="button" class="btn-3d px-3 py-2 text-sm" onclick="toggleEraser()">🧽 Pemadam Pintar: OFF</button>
@@ -3170,6 +3223,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
                 });
             });
           });
+          drawDigitalMarksOnPDF(pdf, pdfWidth, pdfHeight);
         };
         
         if (mode === 'single') {
@@ -3342,6 +3396,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         renderTextOnCanvas(ctx, text, field, canvas);
       });
       
+      drawDigitalMarksOnCanvas(ctx, canvas);
       const previewImg = document.getElementById('finalPreviewImage');
       previewImg.src = canvas.toDataURL('image/jpeg', 0.85);
       document.getElementById('finalPreviewContainer').classList.remove('hidden');
@@ -3710,5 +3765,183 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       };
     })();
   </script>
+<script>
+/** Remove white paper without replacing the original ink colour. */
+function processSignaturePixels(source, threshold = 235, contrast = 100) {
+  const result = new Uint8ClampedArray(source.length);
+  const factor = Math.max(0.1, contrast / 100);
+  for (let i = 0; i < source.length; i += 4) {
+    const darkest = Math.min(source[i], source[i + 1], source[i + 2]);
+    const coverage = Math.max(0, Math.min(1, (threshold - darkest) / 32));
+    const alpha = coverage * source[i + 3] / 255;
+    result[i + 3] = Math.round(alpha * 255);
+    for (let c = 0; c < 3; c++) {
+      const ink = coverage > 0 ? 255 - (255 - source[i + c]) / coverage : 0;
+      result[i + c] = Math.max(0, Math.min(255, (ink - 128) * factor + 128));
+    }
+  }
+  return result;
+}
+
+function signatureBounds(item, width, height) {
+  const w = item.size / 100 * width;
+  const h = w * item.canvas.height / item.canvas.width;
+  return { x: item.x / 100 * width - w / 2, y: item.y / 100 * height - h / 2, width: w, height: h };
+}
+
+// Client-only controls for the standalone certificate document.
+const digitalMarks = { items: [], selectedId: null, counter: 0 };
+function selectedMark() { return digitalMarks.items.find(item => item.id === digitalMarks.selectedId); }
+function clampMark(item) {
+  if (!appState.certificateWidth || !appState.certificateHeight) return;
+  const ratio = item.canvas.height / item.canvas.width;
+  item.size = Math.max(1, Math.min(item.size, 95, 95 * appState.certificateHeight / (appState.certificateWidth * ratio)));
+  const halfX = item.size / 2;
+  const halfY = item.size * appState.certificateWidth * ratio / appState.certificateHeight / 2;
+  item.x = Math.max(halfX, Math.min(100 - halfX, item.x));
+  item.y = Math.max(halfY, Math.min(100 - halfY, item.y));
+}
+function refreshMarkPixels(item) {
+  const working = document.createElement('canvas');
+  working.width = item.original.width; working.height = item.original.height;
+  const ctx = working.getContext('2d');
+  const imageData = ctx.createImageData(working.width, working.height);
+  imageData.data.set(processSignaturePixels(item.original.data, item.threshold, item.contrast));
+  ctx.putImageData(imageData, 0, 0);
+  let left = working.width, top = working.height, right = -1, bottom = -1;
+  for (let y = 0; y < working.height; y++) {
+    for (let x = 0; x < working.width; x++) {
+      if (imageData.data[(y * working.width + x) * 4 + 3] > 12) {
+        left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
+      }
+    }
+  }
+  if (right < 0) return false;
+  left = Math.max(0, left - 3); top = Math.max(0, top - 3);
+  right = Math.min(working.width - 1, right + 3); bottom = Math.min(working.height - 1, bottom + 3);
+  const cropped = document.createElement('canvas');
+  cropped.width = right - left + 1; cropped.height = bottom - top + 1;
+  cropped.getContext('2d').drawImage(working, left, top, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+  item.canvas = cropped; item.png = cropped.toDataURL('image/png');
+  clampMark(item);
+  return true;
+}
+function renderDigitalMarks() {
+  document.querySelectorAll('.digital-mark').forEach(el => el.remove());
+  if (!appState.certificateImage) return;
+  const holder = document.getElementById('certificateCanvas');
+  digitalMarks.items.forEach(item => {
+    clampMark(item);
+    const el = document.createElement('div');
+    el.className = 'digital-mark' + (item.id === digitalMarks.selectedId ? ' selected' : '');
+    el.dataset.markId = item.id;
+    el.style.left = item.x + '%'; el.style.top = item.y + '%'; el.style.width = item.size + '%';
+    const image = document.createElement('img'); image.src = item.png; image.alt = item.name;
+    el.appendChild(image); holder.appendChild(el);
+    el.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.altKey) return;
+      event.preventDefault(); event.stopPropagation();
+      digitalMarks.selectedId = item.id; appState.selectedFieldId = null;
+      document.querySelectorAll('.digital-mark').forEach(mark => mark.classList.toggle('selected', mark === el));
+      syncMarkControls();
+      const rect = holder.getBoundingClientRect();
+      const start = { px: event.clientX, py: event.clientY, x: item.x, y: item.y };
+      el.setPointerCapture(event.pointerId);
+      const move = e => {
+        item.x = start.x + (e.clientX - start.px) / rect.width * 100;
+        item.y = start.y + (e.clientY - start.py) / rect.height * 100;
+        clampMark(item); el.style.left = item.x + '%'; el.style.top = item.y + '%'; syncMarkControls();
+      };
+      const end = () => {
+        el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', end); el.removeEventListener('pointercancel', end);
+      };
+      el.addEventListener('pointermove', move); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    });
+  });
+}
+function syncMarkControls() {
+  const item = selectedMark();
+  const editor = document.getElementById('markEditor'); editor.hidden = !item;
+  const select = document.getElementById('markSelect'); select.replaceChildren();
+  digitalMarks.items.forEach(mark => {
+    const option = document.createElement('option'); option.value = mark.id; option.textContent = mark.name; select.appendChild(option);
+  });
+  if (!item) return;
+  select.value = item.id;
+  document.getElementById('markPreview').src = item.png;
+  for (const [key, id] of [['contrast','markContrast'], ['threshold','markThreshold'], ['size','markSize'], ['x','markX'], ['y','markY']]) {
+    document.getElementById(id).value = Math.round(item[key] * 10) / 10;
+    const output = document.getElementById(id + 'Value');
+    if (output) output.textContent = Math.round(item[key]) + (key === 'threshold' ? '' : '%');
+  }
+}
+async function uploadDigitalMark(file) {
+  if (!file || !/^image\/(png|jpeg|webp|gif|bmp)$/i.test(file.type)) {
+    showToast('Sila pilih gambar PNG, JPG, WEBP, GIF atau BMP.', 'error'); return;
+  }
+  const button = document.getElementById('markUploadButton'); button.disabled = true;
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    const original = document.createElement('canvas');
+    const scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
+    original.width = Math.max(1, Math.round(bitmap.width * scale)); original.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = original.getContext('2d'); ctx.drawImage(bitmap, 0, 0, original.width, original.height);
+    const item = { id: 'mark-' + (++digitalMarks.counter), name: file.name, original: ctx.getImageData(0, 0, original.width, original.height), threshold: 235, contrast: 100, size: 22, x: 50, y: 80 };
+    if (!refreshMarkPixels(item)) { showToast('Tiada tandatangan atau cop dikesan dalam gambar ini.', 'error'); return; }
+    digitalMarks.items.push(item); digitalMarks.selectedId = item.id;
+    renderDigitalMarks(); syncMarkControls(); showToast('Tandatangan / cop ditambah. Latar putih dibuang.');
+  } catch (error) { showToast('Gambar tidak dapat dibaca. Cuba gambar JPG atau PNG.', 'error'); }
+  finally { if (bitmap) bitmap.close(); button.disabled = false; document.getElementById('markInput').value = ''; }
+}
+function drawDigitalMarksOnPDF(pdf, pdfWidth, pdfHeight) {
+  digitalMarks.items.forEach(item => {
+    const bounds = signatureBounds(item, appState.certificateWidth, appState.certificateHeight);
+    const sx = pdfWidth / appState.certificateWidth, sy = pdfHeight / appState.certificateHeight;
+    pdf.addImage(item.png, 'PNG', bounds.x * sx, bounds.y * sy, bounds.width * sx, bounds.height * sy);
+  });
+}
+function drawDigitalMarksOnCanvas(ctx, canvas) {
+  digitalMarks.items.forEach(item => {
+    const b = signatureBounds(item, canvas.width, canvas.height);
+    ctx.drawImage(item.canvas, b.x, b.y, b.width, b.height);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('markUploadButton').addEventListener('click', () => document.getElementById('markInput').click());
+  document.getElementById('markInput').addEventListener('change', e => uploadDigitalMark(e.target.files[0]));
+  document.getElementById('markSelect').addEventListener('change', e => { digitalMarks.selectedId = e.target.value; renderDigitalMarks(); syncMarkControls(); });
+  for (const [key, id] of [['contrast','markContrast'], ['threshold','markThreshold'], ['size','markSize'], ['x','markX'], ['y','markY']]) {
+    document.getElementById(id).addEventListener('input', event => {
+      const item = selectedMark(); if (!item) return;
+      const value = Number(event.target.value); if (!Number.isFinite(value)) return;
+      const previous = item[key];
+      const limits = { contrast: [10,300], threshold: [180,255], size: [1,95], x: [0,100], y: [0,100] };
+      item[key] = Math.max(limits[key][0], Math.min(limits[key][1], value));
+      if ((key === 'contrast' || key === 'threshold') && !refreshMarkPixels(item)) {
+        item[key] = previous; showToast('Tetapan ini menghilangkan semua dakwat. Kurangkan buang putih.', 'error');
+      }
+      clampMark(item); renderDigitalMarks(); syncMarkControls();
+    });
+  }
+  document.getElementById('markRemove').addEventListener('click', () => {
+    digitalMarks.items = digitalMarks.items.filter(item => item.id !== digitalMarks.selectedId);
+    digitalMarks.selectedId = digitalMarks.items.at(-1)?.id || null;
+    renderDigitalMarks(); syncMarkControls();
+  });
+  document.getElementById('markReset').addEventListener('click', () => {
+    const item = selectedMark(); if (!item) return;
+    Object.assign(item, { threshold: 235, contrast: 100, size: 22, x: 50, y: 80 });
+    refreshMarkPixels(item); renderDigitalMarks(); syncMarkControls();
+  });
+  document.getElementById('markDownload').addEventListener('click', () => {
+    const item = selectedMark(); if (!item) return;
+    const a = document.createElement('a'); a.href = item.png; a.download = item.name.replace(/\.[^.]+$/, '') + '-transparent.png'; a.click();
+  });
+  const originalDisplay = displayCertificate;
+  displayCertificate = function () { originalDisplay.apply(this, arguments); renderDigitalMarks(); syncMarkControls(); };
+});
+
+</script>
  </body>
 </html>
