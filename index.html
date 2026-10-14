@@ -3234,10 +3234,24 @@ input[type=color] { min-width:52px; min-height:48px; }
         
         // Get original image for Native 4K drawing into PDF
         const img = new Image();
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
           img.onload = resolve;
+          img.onerror = () => reject(new Error('Gambar sijil gagal dimuatkan. Cuba muat naik semula gambar.'));
           img.src = appState.certificateImage;
         });
+        
+        // Normalisasi gambar latar melalui canvas supaya SEMUA format
+        // (WEBP, GIF, BMP, AVIF, SVG, dsb.) dapat dimasukkan ke dalam PDF.
+        // jsPDF hanya menyokong JPEG/PNG/WEBP secara asli - format lain
+        // menyebabkan ralat "Ralat semasa menjana PDF!".
+        const bgCanvas = document.createElement('canvas');
+        bgCanvas.width = img.width;
+        bgCanvas.height = img.height;
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCtx.fillStyle = '#ffffff';
+        bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+        bgCtx.drawImage(img, 0, 0);
+        const bgDataUrl = bgCanvas.toDataURL('image/jpeg', 0.92);
         
         // Determine PDF orientation
         const orientation = img.width > img.height ? 'l' : 'p';
@@ -3246,10 +3260,7 @@ input[type=color] { min-width:52px; min-height:48px; }
         
         const drawCertificateToPDF = (pdf, idx) => {
           if (appState.showBackground) {
-            let format = 'JPEG';
-            if (appState.certificateImage.startsWith('data:image/png')) format = 'PNG';
-            if (appState.certificateImage.startsWith('data:image/webp')) format = 'WEBP';
-            pdf.addImage(appState.certificateImage, format, 0, 0, pdfWidth, pdfHeight, 'CERT_BG');
+            pdf.addImage(bgDataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight, 'CERT_BG');
           } else {
             pdf.setFillColor(255, 255, 255);
             pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
@@ -3414,7 +3425,7 @@ input[type=color] { min-width:52px; min-height:48px; }
         
       } catch (error) {
         console.error('PDF generation error:', error);
-        showToast('Ralat semasa menjana PDF!', 'error');
+        showToast('Ralat semasa menjana PDF: ' + (error && error.message ? error.message : error), 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>Jana PDF';
