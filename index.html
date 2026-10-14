@@ -2851,9 +2851,13 @@ input[type=color] { min-width:52px; min-height:48px; }
     // ==================== FIELD DATA SOURCE OPTIONS ====================
     function updateFieldDataSourceOptions() {
       const select = document.getElementById('fieldDataSource');
+      const headers = appState.headers.filter(h => h && h.trim() !== '');
+      if (headers.length === 0) {
+        select.innerHTML = '<option value="">⚠️ Sila muat naik data Excel dahulu</option>';
+        return;
+      }
       select.innerHTML = '<option value="">-- Pilih Lajur --</option>';
-      
-      appState.headers.forEach(header => {
+      headers.forEach(header => {
         const opt = document.createElement('option');
         opt.value = header;
         opt.textContent = header;
