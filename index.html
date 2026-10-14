@@ -1359,6 +1359,54 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 .alignment-overlay .ruler-marker.is-centered { fill:var(--guide-centered); }
 @media print { .alignment-overlay, .guide-toolbar { display:none !important; } }
 </style>
+<style id="ipad-touch-controls">
+/* Large touch targets; all editing controls remain outside certificate export. */
+:root { --touch-track: oklch(0.94 0.015 280); --touch-thumb: var(--secondary); --touch-outline: var(--light); }
+.scrollbar-custom { -webkit-overflow-scrolling: touch; }
+.scrollbar-custom::-webkit-scrollbar { width:24px; height:24px; }
+.scrollbar-custom::-webkit-scrollbar-thumb { background:var(--secondary); border:4px solid var(--touch-track); border-radius:14px; }
+.scrollbar-custom::-webkit-scrollbar-track { background:var(--touch-track); }
+.ipad-main-scroll { padding-right:72px !important; scrollbar-width:none; }
+.ipad-main-scroll::-webkit-scrollbar { display:none; }
+.touch-scrollbar { position:fixed; right:max(4px, env(safe-area-inset-right)); top:max(12px, env(safe-area-inset-top)); bottom:max(12px, env(safe-area-inset-bottom)); width:48px; z-index:2000; background:var(--touch-track); border-radius:24px; touch-action:none; user-select:none; }
+.touch-scrollbar[hidden] { display:none; }
+.touch-scroll-thumb { position:absolute; width:48px; left:0; top:0; min-height:72px; cursor:grab; touch-action:none; }
+.touch-scroll-thumb::before { content:''; position:absolute; inset:4px 8px; background:var(--touch-thumb); border:2px solid var(--touch-outline); border-radius:20px; }
+.touch-scrollbar:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.touch-scrollbar.is-dragging .touch-scroll-thumb { cursor:grabbing; }
+button, .mark-button, .zoom-btn { min-height:48px; min-width:48px; touch-action:manipulation; }
+.zoom-btn { width:48px; height:48px; flex-shrink:0; }
+.input-3d, .select-3d { min-height:52px; font-size:16px; }
+input[type=checkbox] { width:24px; height:24px; flex-shrink:0; }
+label:has(input[type=checkbox]), .guide-toggle, .group-badge { min-height:48px; gap:12px; }
+input[type=range] { min-height:48px; touch-action:pan-y; }
+input[type=range]::-webkit-slider-thumb { min-width:28px; min-height:28px; }
+input[type=color] { min-width:52px; min-height:48px; }
+.text-field, #certificateMover { touch-action:none; }
+.text-field { overflow:visible; transition:none; }
+.field-text { overflow:hidden; max-height:100%; }
+.resize-handle { width:48px; height:48px; right:-24px; bottom:-24px; border:3px solid var(--light); background:var(--primary); box-shadow:none; z-index:60; touch-action:none; transform:scale(var(--editor-inverse-zoom, 1)); transform-origin:center; }
+.resize-handle::after { content:'↘'; position:absolute; inset:0; display:grid; place-items:center; font:700 26px system-ui; color:var(--light); }
+.resize-handle:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+#fieldEditor .grid > * { min-width:0; }
+#designTab > .flex:first-child { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+.zoom-controls { width:max-content; max-width:100%; gap:8px; padding:8px; }
+#statusBadge { white-space:normal; }
+@media (max-width:600px) {
+ .ipad-main-scroll { padding:16px 64px 24px 12px !important; }
+ .glass-card { padding:16px !important; }
+ #designTab > .flex:first-child { grid-template-columns:minmax(0,1fr); }
+ .tab-btn { padding:10px 6px; font-size:13px; }
+ .title-3d { font-size:30px; overflow-wrap:anywhere; }
+ .step-indicator { gap:10px; }
+ .step-connector { width:20px; }
+}
+@media (pointer:coarse) {
+ .glass-card:hover, .card-3d:hover, .upload-zone:hover { transform:none; }
+ #certificateFloater { animation:none !important; }
+}
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+</style>
 </head>
  <body class="h-full" oncontextmenu="return false;">
   <div class="app-wrapper h-full"><!-- Floating Background -->
@@ -1983,10 +2031,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           currentX += dx; currentY += dy;
           mover.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
         };
-        mover.addEventListener('mousedown', (e) => {
+        mover.addEventListener('pointerdown', (e) => {
           const panOverride = e.altKey || e.button === 1 || window.__spaceHeld;
           if (window.__eraserActive && !panOverride) return;
+          if (!e.isPrimary || (e.button !== 0 && e.button !== 1)) return;
           if (e.target.closest('.text-field')) return; // let fields handle their own drag
+          mover.setPointerCapture(e.pointerId);
           isPanning = true;
           startX = e.clientX - currentX;
           startY = e.clientY - currentY;
@@ -1994,7 +2044,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           e.preventDefault(); // Prevents image selection
         });
         
-        window.addEventListener('mousemove', (e) => {
+        window.addEventListener('pointermove', (e) => {
           if (isPanning) {
             currentX = e.clientX - startX;
             currentY = e.clientY - startY;
@@ -2007,7 +2057,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
           mover.style.transform = 'translate(-50%, -50%)';
         };
 
-        window.addEventListener('mouseup', () => {
+        window.addEventListener('pointerup', () => {
           if (isPanning) {
             isPanning = false;
             mover.style.cursor = 'grab';
@@ -2275,6 +2325,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     function updateCanvasScale() {
       const canvas = document.getElementById('certificateCanvas');
       canvas.style.transform = `scale(${appState.zoom})`;
+      canvas.style.setProperty('--editor-inverse-zoom', 1 / (appState.zoom || 1));
       document.getElementById('zoomLevel').textContent = Math.round(appState.zoom * 100) + '%';
     }
     
@@ -2367,7 +2418,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       fieldEl.innerHTML = `
         <span class="field-label">${field.dataSource || 'Tiada Data'}</span>
         <span class="field-text">${getSampleText(field.dataSource)}</span>
-        <div class="resize-handle" onmousedown="startResize(event, '${field.id}')"></div>
+        <div class="resize-handle" role="button" tabindex="0" aria-label="Ubah saiz medan" title="Ubah saiz medan" onpointerdown="startResize(event, '${field.id}')"></div>
       `;
       
       const textEl = fieldEl.querySelector('.field-text');
@@ -2395,8 +2446,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       else if(field.textBaseline === 'bottom') fieldEl.style.justifyContent = 'flex-end';
       else fieldEl.style.justifyContent = 'center';
       
-      fieldEl.addEventListener('mousedown', (e) => {
-        if (!e.target.classList.contains('resize-handle')) {
+      fieldEl.addEventListener('pointerdown', (e) => {
+        if (e.isPrimary && e.button === 0 && !e.target.closest('.resize-handle')) {
           startDrag(e, field.id);
         }
       });
@@ -2532,8 +2583,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       
       document.getElementById(fieldId).classList.add('dragging');
       
-      document.addEventListener('mousemove', onDrag);
-      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('pointermove', onDrag);
+      document.addEventListener('pointerup', stopDrag);
+      document.addEventListener('pointercancel', stopDrag);
     }
     
     function onDrag(e) {
@@ -2563,19 +2615,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     
     function stopDrag() {
       if (dragState.fieldId) {
-        document.getElementById(dragState.fieldId).classList.remove('dragging');
+        document.getElementById(dragState.fieldId)?.classList.remove('dragging');
       }
       dragState.isDragging = false;
       dragState.fieldId = null;
       
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('pointermove', onDrag);
+      document.removeEventListener('pointerup', stopDrag);
+      document.removeEventListener('pointercancel', stopDrag);
     }
     
     // ==================== RESIZE ====================
     let resizeState = { isResizing: false, fieldId: null, startX: 0, startY: 0, startWidth: 0, startHeight: 0 };
     
     function startResize(e, fieldId) {
+      if (!e.isPrimary || e.button !== 0) return;
+      selectField(fieldId);
       e.preventDefault();
       e.stopPropagation();
       
@@ -2588,8 +2643,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       resizeState.startWidth = field.width;
       resizeState.startHeight = field.height;
       
-      document.addEventListener('mousemove', onResize);
-      document.addEventListener('mouseup', stopResize);
+      document.addEventListener('pointermove', onResize);
+      document.addEventListener('pointerup', stopResize);
+      document.addEventListener('pointercancel', stopResize);
     }
     
     function onResize(e) {
@@ -2606,7 +2662,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         field.width = Math.max(5, resizeState.startWidth + deltaX * 2);
         field.height = Math.max(5, resizeState.startHeight + deltaY * 2);
         
-        renderField(field);
+        const fieldEl = document.getElementById(field.id);
+        fieldEl.style.width = field.width + '%';
+        fieldEl.style.height = field.height + '%';
         
         if (appState.selectedFieldId === field.id) {
           document.getElementById('fieldWidth').value = field.width.toFixed(1);
@@ -2619,8 +2677,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       resizeState.isResizing = false;
       resizeState.fieldId = null;
       
-      document.removeEventListener('mousemove', onResize);
-      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('pointermove', onResize);
+      document.removeEventListener('pointerup', stopResize);
+      document.removeEventListener('pointercancel', stopResize);
     }
     
     // ==================== GROUP MANAGEMENT ====================
@@ -4171,6 +4230,63 @@ function imageGuideObserver() {
       location.reload();
     }
   };
+})();
+</script>
+<script id="ipad-touch-scroll">
+(function () {
+ document.addEventListener('DOMContentLoaded', () => {
+  const scroller = document.querySelector('.app-wrapper > .scrollbar-custom');
+  if (!scroller) return;
+  scroller.classList.add('ipad-main-scroll');
+  const track = document.createElement('div');
+  track.className = 'touch-scrollbar'; track.tabIndex = 0;
+  track.setAttribute('role', 'scrollbar'); track.setAttribute('aria-label', 'Seret untuk skrol halaman');
+  track.setAttribute('aria-orientation', 'vertical'); track.setAttribute('aria-valuemin', '0');
+  scroller.id = scroller.id || 'sijilMainScroll'; track.setAttribute('aria-controls', scroller.id);
+  const thumb = document.createElement('div'); thumb.className = 'touch-scroll-thumb';
+  track.appendChild(thumb); document.body.appendChild(track);
+  let active = null;
+  function metrics() {
+   const height = track.clientHeight;
+   const size = Math.min(height, Math.max(72, height * scroller.clientHeight / Math.max(1, scroller.scrollHeight)));
+   return { size, travel:height-size, max:Math.max(0, scroller.scrollHeight-scroller.clientHeight) };
+  }
+  function sync() {
+   track.hidden = scroller.scrollHeight <= scroller.clientHeight + 1;
+   const m = metrics(); thumb.style.height = m.size + 'px';
+   thumb.style.transform = `translateY(${m.max ? scroller.scrollTop / m.max * m.travel : 0}px)`;
+   track.setAttribute('aria-valuemax', String(Math.round(m.max)));
+   track.setAttribute('aria-valuenow', String(Math.round(scroller.scrollTop)));
+  }
+  track.addEventListener('pointerdown', e => {
+   if (!e.isPrimary || e.button !== 0) return;
+   e.preventDefault(); track.setPointerCapture(e.pointerId);
+   const m=metrics();
+   if (!thumb.contains(e.target) && m.travel > 0) {
+    scroller.scrollTop = Math.max(0, Math.min(m.travel, e.clientY-track.getBoundingClientRect().top-m.size/2)) / m.travel * m.max;
+   }
+   active={id:e.pointerId,y:e.clientY,scroll:scroller.scrollTop}; track.classList.add('is-dragging'); sync();
+  });
+  track.addEventListener('pointermove', e => {
+   if (!active || active.id !== e.pointerId) return;
+   e.preventDefault(); const m=metrics();
+   if (m.travel > 0) scroller.scrollTop=active.scroll+(e.clientY-active.y)/m.travel*m.max;
+  });
+  function end(e) { if (active && active.id === e.pointerId) { active=null; track.classList.remove('is-dragging'); } }
+  track.addEventListener('pointerup',end); track.addEventListener('pointercancel',end); track.addEventListener('lostpointercapture',end);
+  track.addEventListener('keydown',e => {
+   const steps={ArrowDown:80,ArrowUp:-80,PageDown:scroller.clientHeight*.8,PageUp:-scroller.clientHeight*.8};
+   if (e.key in steps) { e.preventDefault(); scroller.scrollTop+=steps[e.key]; }
+   if (e.key==='Home' || e.key==='End') { e.preventDefault(); scroller.scrollTop=e.key==='Home'?0:metrics().max; }
+  });
+  scroller.addEventListener('scroll',sync,{passive:true}); window.addEventListener('resize',sync);
+  const observer = new ResizeObserver(sync); observer.observe(scroller);
+  for (const child of scroller.children) observer.observe(child);
+  new MutationObserver(sync).observe(scroller,{childList:true,subtree:true}); sync();
+  document.querySelectorAll('.zoom-btn').forEach((el,i) => { const label=['Zum keluar','Zum masuk','Muatkan sijil'][i]; el.title=label; el.setAttribute('aria-label',label); });
+  const del=document.querySelector('#fieldEditor button'); if (del) { del.title='Padam medan'; del.setAttribute('aria-label','Padam medan'); }
+  window.addEventListener('pointercancel',()=> { stopDrag(); stopResize(); });
+ });
 })();
 </script>
 </body>
